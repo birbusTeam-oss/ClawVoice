@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ClawVoice — Open Source Voice Dictation</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { background: #0a0a0a; color: #fff; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; }
+.hero { min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 40px 20px; }
+.logo { font-size: 64px; margin-bottom: 16px; }
+h1 { font-size: 48px; font-weight: 800; margin-bottom: 16px; }
+.gradient { background: linear-gradient(135deg, #6B5ECD, #a78bfa); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+.subtitle { font-size: 20px; color: #888; margin-bottom: 48px; max-width: 500px; }
+.buttons { display: flex; gap: 16px; flex-wrap: wrap; justify-content: center; margin-bottom: 64px; }
+.btn { padding: 16px 32px; border-radius: 8px; font-size: 16px; font-weight: 600; text-decoration: none; transition: opacity 0.2s; }
+.btn:hover { opacity: 0.8; }
+.btn-primary { background: #6B5ECD; color: white; }
+.btn-secondary { background: #1a1a1a; color: white; border: 1px solid #333; }
+.features { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 24px; max-width: 800px; width: 100%; }
+.feature { background: #111; border: 1px solid #222; border-radius: 12px; padding: 24px; text-align: left; }
+.feature .icon { font-size: 32px; margin-bottom: 12px; }
+.feature h3 { margin-bottom: 8px; }
+.feature p { color: #888; font-size: 14px; line-height: 1.6; }
+.footer { padding: 40px; text-align: center; color: #555; }
+</style>
+</head>
+<body>
+<div class="hero">
+  <div class="logo">🎙️</div>
+  <h1><span class="gradient">ClawVoice</span></h1>
+  <p class="subtitle">Open source voice dictation for any app.<br>Powered by Claude AI. No subscription.</p>
+  <div class="buttons">
+    <a href="https://github.com/birbusTeam-oss/ClawVoice/releases/latest" class="btn btn-primary">⬇️ Download for Windows</a>
+    <a href="https://github.com/birbusTeam-oss/ClawVoice/releases/latest" class="btn btn-primary">⬇️ Download for Android</a>
+    <a href="https://github.com/birbusTeam-oss/ClawVoice" class="btn btn-secondary">⭐ View on GitHub</a>
+  </div>
+  <div class="features">
+    <div class="feature">
+      <div class="icon">🔒</div>
+      <h3>100% Private</h3>
+      <p>Your audio goes directly to Anthropic's API. We have no servers and collect zero data.</p>
+    </div>
+    <div class="feature">
+      <div class="icon">⚡</div>
+      <h3>Works Everywhere</h3>
+      <p>Gmail, Slack, Chrome, Word, Notes — any app with a text field. System-level injection.</p>
+    </div>
+    <div class="feature">
+      <div class="icon">🤖</div>
+      <h3>Claude-Powered</h3>
+      <p>Whisper transcribes, Claude cleans it up. No filler words, perfect punctuation.</p>
+    </div>
+    <div class="feature">
+      <div class="icon">🆓</div>
+      <h3>Bring Your Own Key</h3>
+      <p>Use your existing Anthropic API key. No new subscriptions. Costs pennies per day.</p>
+    </div>
+  </div>
+</div>
+<div class="footer">
+  Built by the Birbus team 🐦 — <a href="https://github.com/birbusTeam-oss/ClawVoice" style="color: #6B5ECD;">Open source forever</a>
+</div>
+</body>
+</html>
