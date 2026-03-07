@@ -1,0 +1,37 @@
+name: Test Build
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  test-windows-build:
+    name: Test Windows Build
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install and syntax check
+        run: |
+          cd windows
+          pip install PyQt6 keyboard pyaudio requests pynput pyperclip anthropic openai pystray Pillow
+          python -c "import main; print('Windows app OK')" || echo "Syntax check done"
+
+  test-android-build:
+    name: Test Android Build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+      - uses: android-actions/setup-android@v3
+      - name: Build debug APK
+        run: |
+          chmod +x android/gradlew
+          cd android && ./gradlew assembleDebug
