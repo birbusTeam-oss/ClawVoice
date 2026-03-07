@@ -1,0 +1,36 @@
+# Android
+*.iml
+.gradle/
+/local.properties
+/.idea/
+.DS_Store
+/build/
+/captures/
+.externalNativeBuild/
+.cxx/
+*.apk
+*.aab
+*.ap_
+*.dex
+
+# Keystore / secrets
+*.jks
+*.keystore
+local.properties
+secrets.properties
+api_keys.properties
+.env
+.env.local
+
+# Kotlin
+*.class
+
+# Windows
+windows/build/
+*.exe
+*.obj
+
+# General
+*.log
+*.tmp
+node_modules/
