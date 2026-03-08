@@ -60,5 +60,5 @@ dependencies {
     implementation(libs.androidx.lifecycle.runtime.ktx)
 
     // Security — Encrypted API key storage via Android Keystore
-    implementation("androidx.security:security-crypto:1.1.0-alpha06")
+    implementation(libs.androidx.security.crypto)
 }
