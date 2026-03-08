@@ -22,7 +22,7 @@ jobs:
           cd windows
           pip install pyinstaller PyQt6 keyboard pyaudio requests pynput pyperclip anthropic pystray Pillow pywin32
 
-      - name: Build .exe with PyInstaller
+      - name: Build exe
         run: |
           cd windows
           pyinstaller --onefile --windowed --name ClawVoice --icon=assets/icon.ico --add-data "assets;assets" run.py
@@ -36,25 +36,29 @@ jobs:
           cd windows
           "C:\Program Files (x86)\NSIS\makensis.exe" installer.nsi
 
-      - name: Upload installer artifact
+      - name: Upload installer
         uses: actions/upload-artifact@v4
         with:
           name: ClawVoice-Setup
           path: windows/ClawVoice-Setup.exe
 
-  publish-release:
-    name: Publish Release
+  update-release:
+    name: Update v0.2 Release
     needs: build-windows
-    if: startsWith(github.ref, 'refs/tags/')
     runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    permissions:
+      contents: write
     steps:
       - uses: actions/download-artifact@v4
         with:
           name: ClawVoice-Setup
 
-      - name: Publish GitHub Release
+      - name: Upload to v0.2 release
         uses: softprops/action-gh-release@v1
         with:
+          tag_name: v0.2
           files: ClawVoice-Setup.exe
+          fail_on_unmatched_files: false
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

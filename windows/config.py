@@ -2,6 +2,7 @@ import json
 import os
 from pathlib import Path
 
+
 class Config:
     CONFIG_DIR = Path(os.environ.get("APPDATA", "~")) / "ClawVoice"
     CONFIG_FILE = CONFIG_DIR / "config.json"
@@ -30,13 +31,4 @@ class Config:
     @anthropic_key.setter
     def anthropic_key(self, value):
         self._data["anthropic_key"] = value.strip()
-        self._save()
-
-    @property
-    def hotkey(self):
-        return self._data.get("hotkey", "right alt")
-
-    @hotkey.setter
-    def hotkey(self, value):
-        self._data["hotkey"] = value
         self._save()

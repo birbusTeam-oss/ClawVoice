@@ -1,17 +1,21 @@
+import sys
+import os
 from injector import inject
 from PyQt6.QtWidgets import QSystemTrayIcon, QMenu
 from PyQt6.QtGui import QIcon
-from PyQt6.QtCore import Qt
-import os
 
-def load_icon(name):
-    """Load ICO from assets folder"""
-    base = os.path.join(os.path.dirname(__file__), "assets", name)
-    if os.path.exists(base):
-        return QIcon(base)
-    # Fallback to bundled path (PyInstaller)
-    base2 = os.path.join(os.path.dirname(os.path.abspath(__file__)), "assets", name)
-    return QIcon(base2)
+
+def get_asset_path(filename):
+    """Resolve asset path for both dev and PyInstaller frozen bundle."""
+    if getattr(sys, 'frozen', False):
+        # PyInstaller bundle — assets are in sys._MEIPASS/assets/
+        base = os.path.join(sys._MEIPASS, "assets", filename)
+        if os.path.exists(base):
+            return base
+    # Dev mode — relative to this file
+    base = os.path.join(os.path.dirname(os.path.abspath(__file__)), "assets", filename)
+    return base
+
 
 class TrayManager:
     def __init__(self, app, clawvoice, settings_window):
@@ -21,10 +25,10 @@ class TrayManager:
         self.settings_window = settings_window
 
         self.icons = {
-            "idle":         load_icon("tray_idle.ico"),
-            "recording":    load_icon("tray_recording.ico"),
-            "transcribing": load_icon("tray_transcribing.ico"),
-            "error":        load_icon("tray_error.ico"),
+            "idle":         QIcon(get_asset_path("tray_idle.ico")),
+            "recording":    QIcon(get_asset_path("tray_recording.ico")),
+            "transcribing": QIcon(get_asset_path("tray_transcribing.ico")),
+            "error":        QIcon(get_asset_path("tray_error.ico")),
         }
 
         self.tray.setIcon(self.icons["idle"])

@@ -1,20 +1,17 @@
 @echo off
 echo ========================================
-echo  ClawVoice Windows Build Script
+echo  ClawVoice Windows Build
 echo ========================================
 echo.
 echo Installing dependencies...
-pip install pyinstaller PyQt6 keyboard pyaudio requests pynput pyperclip anthropic pystray Pillow
+pip install pyinstaller PyQt6 keyboard pyaudio requests pynput pyperclip anthropic pystray Pillow pywin32
 echo.
 echo Building ClawVoice.exe...
-pyinstaller --onefile --windowed --name ClawVoice --icon=NONE run.py
+pyinstaller --onefile --windowed --name ClawVoice --icon=assets/icon.ico --add-data "assets;assets" run.py
 echo.
 if exist dist\ClawVoice.exe (
-    echo ✅ SUCCESS! ClawVoice.exe is ready at:
-    echo    dist\ClawVoice.exe
-    echo.
-    echo Copy it anywhere and double-click to run.
+    echo SUCCESS: dist\ClawVoice.exe
 ) else (
-    echo ❌ Build failed. Check errors above.
+    echo FAILED. Check errors above.
 )
 pause
