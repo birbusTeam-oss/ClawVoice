@@ -21,7 +21,7 @@ No subscription. No backend. No data collection. Just your API key and your voic
 ## How it works
 
 ```
-You speak → Whisper transcribes → Claude cleans it up → text appears in any app
+You speak → Claude transcribes + cleans it up → text appears in any app
 ```
 
 1. **Windows:** Hold `Right Alt` anywhere → speak → release → text is typed for you
@@ -35,19 +35,22 @@ Works in Gmail, Chrome, Word, Slack, Notes, Messages — anything with a text fi
 
 Voice dictation should be open and free infrastructure.
 
-Bring your own Anthropic API key — typical usage costs pennies per day. Your audio goes directly from your device to Anthropic's API. No middleman.
+Bring your own Anthropic API key — typical usage costs pennies per day. Your audio goes directly from your device to Anthropic's API. No middleman. One key. That's it.
 
 ---
 
 ## Setup
 
+### API Key
+Get your free Anthropic API key at [console.anthropic.com](https://console.anthropic.com)
+
+That's the only key you need. ClawVoice uses Claude for everything.
+
 ### Windows
 1. Download `ClawVoice.exe` from [releases](https://github.com/birbusTeam-oss/ClawVoice/releases/latest)
 2. Double-click to run — no installation needed
 3. Right-click the tray icon → **Settings**
-4. Add your API keys:
-   - **Anthropic** (Claude): [console.anthropic.com](https://console.anthropic.com)
-   - **OpenAI** (Whisper): [platform.openai.com](https://platform.openai.com)
+4. Enter your Anthropic API key
 5. Hold `Right Alt` anywhere to start dictating
 
 ### Android
@@ -63,8 +66,8 @@ Bring your own Anthropic API key — typical usage costs pennies per day. Your a
 ## Features
 
 - 🎙️ **Works in any app** — Gmail, Chrome, Word, Slack, Notes, everything
-- 🤖 **Whisper + Claude pipeline** — accurate transcription, clean output
-- 🔒 **Zero data collection** — audio goes directly to Anthropic/OpenAI APIs
+- 🤖 **Claude-powered** — transcription and cleanup in one shot, no pipeline complexity
+- 🔒 **Zero data collection** — audio goes directly to Anthropic's API
 - 🖥️ **Windows** — system tray app, `Right Alt` hotkey, color-coded status
 - 📱 **Android** — floating overlay button, works system-wide
 - ⚡ **Hardware-encrypted key storage** — Android Keystore + AES256-GCM
@@ -75,7 +78,7 @@ Bring your own Anthropic API key — typical usage costs pennies per day. Your a
 
 ## Privacy
 
-Your audio goes directly from your device to Anthropic/OpenAI's APIs.
+Your audio goes directly from your device to Anthropic's API.
 
 We have **no servers**. We store **no data**. We see **nothing**.
 

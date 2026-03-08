@@ -3,10 +3,6 @@ import os
 from pathlib import Path
 
 class Config:
-    """
-    Stores config locally in %APPDATA%/ClawVoice/config.json
-    API keys encrypted at rest (simple XOR for now, Keyring in v2)
-    """
     CONFIG_DIR = Path(os.environ.get("APPDATA", "~")) / "ClawVoice"
     CONFIG_FILE = CONFIG_DIR / "config.json"
 
@@ -34,15 +30,6 @@ class Config:
     @anthropic_key.setter
     def anthropic_key(self, value):
         self._data["anthropic_key"] = value.strip()
-        self._save()
-
-    @property
-    def openai_key(self):
-        return self._data.get("openai_key", "")
-
-    @openai_key.setter
-    def openai_key(self, value):
-        self._data["openai_key"] = value.strip()
         self._save()
 
     @property

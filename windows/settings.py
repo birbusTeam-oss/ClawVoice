@@ -1,4 +1,4 @@
-from PyQt6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout,
+from PyQt6.QtWidgets import (QWidget, QVBoxLayout,
     QLabel, QLineEdit, QPushButton, QGroupBox, QFormLayout)
 from PyQt6.QtCore import Qt
 
@@ -7,15 +7,15 @@ class SettingsWindow(QWidget):
         super().__init__()
         self.config = config
         self.setWindowTitle("ClawVoice Settings")
-        self.setFixedSize(400, 300)
+        self.setFixedSize(400, 240)
         self.setWindowFlags(Qt.WindowType.Window | Qt.WindowType.WindowStaysOnTopHint)
         self.setup_ui()
 
     def setup_ui(self):
         layout = QVBoxLayout(self)
 
-        # API Keys group
-        api_group = QGroupBox("API Keys")
+        # API Key group
+        api_group = QGroupBox("API Key")
         api_layout = QFormLayout()
 
         self.anthropic_input = QLineEdit()
@@ -24,27 +24,21 @@ class SettingsWindow(QWidget):
         self.anthropic_input.setText(self.config.anthropic_key)
         api_layout.addRow("Anthropic (Claude):", self.anthropic_input)
 
-        self.openai_input = QLineEdit()
-        self.openai_input.setPlaceholderText("sk-...")
-        self.openai_input.setEchoMode(QLineEdit.EchoMode.Password)
-        self.openai_input.setText(self.config.openai_key)
-        api_layout.addRow("OpenAI (Whisper):", self.openai_input)
-
         api_group.setLayout(api_layout)
         layout.addWidget(api_group)
 
-        # Info label
-        info = QLabel("💡 Keys stored locally on your machine. Never sent to any server except Anthropic/OpenAI directly.")
+        # Info
+        info = QLabel("Get your free API key at console.anthropic.com\n\nKeys stored locally. Never sent to any server except Anthropic directly.")
         info.setWordWrap(True)
         info.setStyleSheet("color: gray; font-size: 11px;")
         layout.addWidget(info)
 
         # Hotkey info
-        hotkey_label = QLabel("🎙️ Hotkey: Hold Right Alt to record, release to transcribe")
+        hotkey_label = QLabel("🎙️ Hold Right Alt anywhere to record")
         hotkey_label.setStyleSheet("font-weight: bold;")
         layout.addWidget(hotkey_label)
 
-        # Save button
+        # Save
         save_btn = QPushButton("Save")
         save_btn.clicked.connect(self.save)
         save_btn.setStyleSheet("background: #6B5ECD; color: white; padding: 8px; border-radius: 4px;")
@@ -52,5 +46,4 @@ class SettingsWindow(QWidget):
 
     def save(self):
         self.config.anthropic_key = self.anthropic_input.text()
-        self.config.openai_key = self.openai_input.text()
         self.hide()
