@@ -25,11 +25,19 @@ jobs:
         run: |
           cd windows
           pyinstaller --onefile --windowed --name ClawVoice --icon=assets/icon.ico --add-data "assets;assets" run.py
-      - name: Upload Windows artifact
+      - name: Build NSIS Installer
+        run: |
+          choco install nsis -y
+          cd windows
+          makensis installer.nsi
+          move ClawVoice-Setup.exe dist\ClawVoice-Setup.exe
+      - name: Upload Windows artifacts
         uses: actions/upload-artifact@v4
         with:
           name: ClawVoice-Windows
-          path: windows/dist/ClawVoice.exe
+          path: |
+            windows/dist/ClawVoice.exe
+            windows/dist/ClawVoice-Setup.exe
 
   build-android:
     name: Build Android APK
@@ -75,6 +83,7 @@ jobs:
       - name: Rename files
         run: |
           mv ./dist/ClawVoice.exe "./dist/ClawVoice-${{ github.ref_name }}-Windows.exe"
+          mv ./dist/ClawVoice-Setup.exe "./dist/ClawVoice-${{ github.ref_name }}-Setup.exe"
           mv ./dist/app-debug.apk "./dist/ClawVoice-${{ github.ref_name }}-Android.apk"
       - name: Create Release
         uses: softprops/action-gh-release@v2
@@ -88,7 +97,8 @@ jobs:
             ### Download
             | Platform | File | Instructions |
             |----------|------|-------------|
-            | Windows | `ClawVoice-${{ github.ref_name }}-Windows.exe` | Double-click to run |
+            | Windows (Installer) | `ClawVoice-${{ github.ref_name }}-Setup.exe` | Run installer, shortcut added to desktop |
+            | Windows (Portable) | `ClawVoice-${{ github.ref_name }}-Windows.exe` | Double-click to run |
             | Android | `ClawVoice-${{ github.ref_name }}-Android.apk` | Enable unknown sources, tap to install |
 
             ### First time setup
@@ -104,6 +114,7 @@ jobs:
             **Built by the Birbus team** 🐦
           files: |
             ./dist/ClawVoice-${{ github.ref_name }}-Windows.exe
+            ./dist/ClawVoice-${{ github.ref_name }}-Setup.exe
             ./dist/ClawVoice-${{ github.ref_name }}-Android.apk
           draft: false
           prerelease: false
