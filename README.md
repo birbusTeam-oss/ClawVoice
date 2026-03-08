@@ -1,9 +1,10 @@
 # ClawVoice 🎙️
 
-> Open source voice dictation for any app — powered by Claude AI. Free forever.
+> Open source voice dictation for any app — powered by Claude AI.
 
 **Hold a button. Speak. Text appears wherever you're typing.**
 
+You deserve voice dictation that's open, free, and respects your privacy.
 No subscription. No backend. No data collection. Just your API key and your voice.
 
 ---
@@ -14,8 +15,6 @@ No subscription. No backend. No data collection. Just your API key and your voic
 |----------|----------|--------------|
 | **Windows** | [⬇️ ClawVoice.exe](https://github.com/birbusTeam-oss/ClawVoice/releases/latest) | Windows 10/11 |
 | **Android** | [⬇️ ClawVoice.apk](https://github.com/birbusTeam-oss/ClawVoice/releases/latest) | Android 8.0+ |
-
-Or visit the [releases page](https://github.com/birbusTeam-oss/ClawVoice/releases) for all versions.
 
 ---
 
@@ -34,15 +33,9 @@ Works in Gmail, Chrome, Word, Slack, Notes, Messages — anything with a text fi
 
 ## Why ClawVoice?
 
-Wispr Flow charges **$16/month**. Superwhisper charges **$10/month**.
+Voice dictation should be open and free infrastructure.
 
-ClawVoice is free. You bring your own Anthropic API key — typical usage costs **pennies per day**.
-
-The difference: Whisper handles "what did you say." Claude handles "what did you mean."
-
-| You say | Others give you | ClawVoice gives you |
-|---------|----------------|---------------------|
-| "uh hey so basically can you send me that thing" | `uh hey so basically can you send me that thing` | `Hey, can you send me that?` |
+Bring your own Anthropic API key — typical usage costs pennies per day. Your audio goes directly from your device to Anthropic's API. No middleman.
 
 ---
 
