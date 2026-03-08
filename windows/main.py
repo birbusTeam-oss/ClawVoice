@@ -7,7 +7,7 @@ import os
 from PyQt6.QtCore import QObject, pyqtSignal
 from recorder import AudioRecorder
 from transcriber import Transcriber
-from injector import TextInjector
+from injector import inject
 
 class ClawVoice(QObject):
     transcription_ready = pyqtSignal(str)
@@ -17,7 +17,7 @@ class ClawVoice(QObject):
         super().__init__()
         self.config = config
         self.recorder = AudioRecorder()
-        self.injector = TextInjector()
+        
         self.is_recording = False
         self._hotkey_held = False
         self._setup_hotkey()

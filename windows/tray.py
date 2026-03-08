@@ -1,3 +1,4 @@
+from injector import inject
 from PyQt6.QtWidgets import QSystemTrayIcon, QMenu
 from PyQt6.QtGui import QIcon
 from PyQt6.QtCore import Qt
@@ -36,7 +37,7 @@ class TrayManager:
         self.tray.setContextMenu(menu)
 
         clawvoice.status_changed.connect(self._on_status)
-        clawvoice.transcription_ready.connect(clawvoice.injector.inject)
+        clawvoice.transcription_ready.connect(inject)
 
         self.tray.show()
 
