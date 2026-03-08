@@ -6,17 +6,13 @@ import android.content.Intent
 import android.media.MediaRecorder
 import android.os.IBinder
 import androidx.core.app.NotificationCompat
+import com.birbus.clawvoice.security.SecureStorage
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
 import java.io.File
 
-/**
- * ClawVoice Recording Service
- * Runs in foreground, captures audio when activated,
- * sends to transcription, injects result into focused field.
- */
 class VoiceRecordingService : Service() {
 
     private var recorder: MediaRecorder? = null
@@ -41,16 +37,15 @@ class VoiceRecordingService : Service() {
 
     private fun startRecording() {
         if (isRecording) return
-
         createNotificationChannel()
-        startForeground(NOTIF_ID, buildNotification("🎙️ Recording... tap STOP to finish"))
+        startForeground(NOTIF_ID, buildNotification("🎙️ Recording..."))
 
         val outputFile = getOutputFile()
         recorder = MediaRecorder(this).apply {
             setAudioSource(MediaRecorder.AudioSource.MIC)
             setOutputFormat(MediaRecorder.OutputFormat.MPEG_4)
             setAudioEncoder(MediaRecorder.AudioEncoder.AAC)
-            setAudioSamplingRate(16000)  // Whisper prefers 16kHz
+            setAudioSamplingRate(16000)
             setAudioEncodingBitRate(128000)
             setOutputFile(outputFile.absolutePath)
             prepare()
@@ -61,84 +56,63 @@ class VoiceRecordingService : Service() {
 
     private fun stopRecordingAndTranscribe() {
         if (!isRecording) return
-
-        try {
-            recorder?.apply { stop(); release() }
-        } catch (e: Exception) {
-            // Recording may have been too short
-        }
+        try { recorder?.apply { stop(); release() } } catch (e: Exception) {}
         recorder = null
         isRecording = false
 
         val outputFile = getOutputFile()
-        val prefs = getSharedPreferences("clawvoice", Context.MODE_PRIVATE)
-        val claudeKey = prefs.getString("api_key", "") ?: ""
-        val whisperKey = prefs.getString("whisper_api_key", "") ?: ""
+        val apiKey = SecureStorage(this).getApiKey() ?: ""
 
         scope.launch {
-            updateNotification("⏳ Transcribing...")
+            updateNotification("⏳ Transcribing with Claude...")
 
-            val client = ClaudeApiClient(claudeKey)
-
-            // Step 1: Transcribe
-            val transcribeResult = client.transcribeAudio(outputFile, whisperKey)
-            transcribeResult.onFailure {
-                updateNotification("❌ Transcription failed: ${it.message}")
+            if (apiKey.isBlank()) {
+                updateNotification("❌ No API key — open ClawVoice to add your Anthropic key")
                 return@launch
             }
 
-            val rawText = transcribeResult.getOrThrow()
+            val client = ClaudeApiClient(apiKey)
+            val result = client.transcribeAudio(outputFile)
 
-            // Step 2: Claude cleanup (if API key set)
-            val finalText = if (claudeKey.isNotBlank()) {
-                val cleanResult = client.cleanupTranscription(rawText)
-                cleanResult.getOrElse { rawText }  // Fall back to raw if cleanup fails
-            } else {
-                rawText
+            result.onSuccess { text ->
+                val injected = TextInjectionService.injectText(text)
+                updateNotification(
+                    if (injected) "✅ Done! Tap mic to record again"
+                    else "⚠️ Transcribed but couldn't inject — is accessibility enabled?"
+                )
+            }
+            result.onFailure {
+                updateNotification("❌ Failed: ${it.message}")
             }
 
-            // Step 3: Inject
-            val injected = TextInjectionService.injectText(finalText)
-            updateNotification(
-                if (injected) "✅ Injected! Tap mic to record again"
-                else "⚠️ Transcribed but couldn't inject — is accessibility enabled?"
-            )
+            outputFile.delete()
         }
     }
 
     private fun getOutputFile() = File(cacheDir, "clawvoice_recording.m4a")
 
     private fun createNotificationChannel() {
-        val channel = NotificationChannel(
-            CHANNEL_ID,
-            "ClawVoice Recording",
-            NotificationManager.IMPORTANCE_LOW
-        ).apply {
-            description = "Shows recording status"
-        }
+        val channel = NotificationChannel(CHANNEL_ID, "ClawVoice Recording",
+            NotificationManager.IMPORTANCE_LOW).apply { description = "Recording status" }
         getSystemService(NotificationManager::class.java).createNotificationChannel(channel)
     }
 
     private fun buildNotification(text: String): Notification {
-        val stopIntent = Intent(this, VoiceRecordingService::class.java).apply {
-            action = ACTION_STOP
-        }
-        val stopPendingIntent = PendingIntent.getService(
-            this, 0, stopIntent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
-        )
+        val stopIntent = PendingIntent.getService(this, 0,
+            Intent(this, VoiceRecordingService::class.java).apply { action = ACTION_STOP },
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
 
         return NotificationCompat.Builder(this, CHANNEL_ID)
             .setContentTitle("ClawVoice")
             .setContentText(text)
             .setSmallIcon(android.R.drawable.ic_btn_speak_now)
-            .addAction(android.R.drawable.ic_media_pause, "Stop", stopPendingIntent)
+            .addAction(android.R.drawable.ic_media_pause, "Stop", stopIntent)
             .setOngoing(true)
             .build()
     }
 
     private fun updateNotification(text: String) {
-        val notification = buildNotification(text)
-        getSystemService(NotificationManager::class.java).notify(NOTIF_ID, notification)
+        getSystemService(NotificationManager::class.java).notify(NOTIF_ID, buildNotification(text))
     }
 
     override fun onDestroy() {

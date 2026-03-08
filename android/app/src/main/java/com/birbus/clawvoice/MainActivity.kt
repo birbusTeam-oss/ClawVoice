@@ -3,6 +3,7 @@ package com.birbus.clawvoice
 import android.accessibilityservice.AccessibilityServiceInfo
 import android.content.Context
 import android.content.Intent
+import android.net.Uri
 import android.os.Bundle
 import android.provider.Settings
 import android.view.accessibility.AccessibilityManager
@@ -23,12 +24,10 @@ class MainActivity : AppCompatActivity() {
 
         secureStorage = SecureStorage(this)
 
-        // API key input — load from encrypted storage
-        val apiKeyInput = findViewById<EditText>(R.id.apiKeyInput)
+        val apiKeyInput = findViewById<EditText>(R.id.et_api_key)
         apiKeyInput.setText(secureStorage.getApiKey() ?: "")
 
-        // Save API key to encrypted storage
-        findViewById<Button>(R.id.saveApiKeyBtn).setOnClickListener {
+        findViewById<Button>(R.id.btn_save).setOnClickListener {
             val key = apiKeyInput.text.toString().trim()
             if (key.isNotBlank()) {
                 secureStorage.saveApiKey(key)
@@ -36,41 +35,45 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
-        // Accessibility service status
-        val statusText = findViewById<TextView>(R.id.accessibilityStatus)
-        updateAccessibilityStatus(statusText)
+        findViewById<Button>(R.id.btn_grant_overlay).setOnClickListener {
+            startActivity(Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
+                Uri.parse("package:$packageName")))
+        }
 
-        // Open accessibility settings
-        findViewById<Button>(R.id.openAccessibilityBtn).setOnClickListener {
+        findViewById<Button>(R.id.btn_grant_accessibility).setOnClickListener {
             startActivity(Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS))
         }
 
-        // Manual record button (for testing without overlay)
-        val recordBtn = findViewById<Button>(R.id.recordBtn)
-        recordBtn.setOnClickListener {
+        findViewById<Button>(R.id.btn_start).setOnClickListener {
             val intent = Intent(this, VoiceRecordingService::class.java)
             intent.action = VoiceRecordingService.ACTION_START
             startForegroundService(intent)
         }
 
-        val stopBtn = findViewById<Button>(R.id.stopBtn)
-        stopBtn.setOnClickListener {
-            val intent = Intent(this, VoiceRecordingService::class.java)
-            intent.action = VoiceRecordingService.ACTION_STOP
-            startService(intent)
-        }
+        updatePermissionStatus()
     }
 
     override fun onResume() {
         super.onResume()
-        val statusText = findViewById<TextView>(R.id.accessibilityStatus)
-        updateAccessibilityStatus(statusText)
+        updatePermissionStatus()
     }
 
-    private fun updateAccessibilityStatus(tv: TextView) {
+    private fun updatePermissionStatus() {
+        val overlayStatus = findViewById<TextView>(R.id.iv_overlay_status)
+        val overlayGranted = Settings.canDrawOverlays(this)
+        overlayStatus.text = if (overlayGranted) "✓" else "○"
+        overlayStatus.setTextColor(
+            if (overlayGranted) getColor(R.color.success_green) else getColor(R.color.text_secondary)
+        )
+
+        val accessibilityStatus = findViewById<TextView>(R.id.iv_accessibility_status)
         val am = getSystemService(Context.ACCESSIBILITY_SERVICE) as AccessibilityManager
-        val enabled = am.getEnabledAccessibilityServiceList(AccessibilityServiceInfo.FEEDBACK_ALL_MASK)
-            .any { it.resolveInfo.serviceInfo.packageName == packageName }
-        tv.text = if (enabled) "✅ Accessibility Service: ON" else "❌ Accessibility Service: OFF — tap button below to enable"
+        val accessibilityEnabled = am.getEnabledAccessibilityServiceList(
+            AccessibilityServiceInfo.FEEDBACK_ALL_MASK
+        ).any { it.resolveInfo.serviceInfo.packageName == packageName }
+        accessibilityStatus.text = if (accessibilityEnabled) "✓" else "○"
+        accessibilityStatus.setTextColor(
+            if (accessibilityEnabled) getColor(R.color.success_green) else getColor(R.color.text_secondary)
+        )
     }
 }
