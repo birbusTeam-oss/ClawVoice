@@ -20,7 +20,7 @@ jobs:
       - name: Install dependencies
         run: |
           cd windows
-          pip install pyinstaller PyQt6 keyboard pyaudio requests pynput pyperclip anthropic pystray Pillow
+          pip install pyinstaller PyQt6 keyboard pyaudio requests pynput pyperclip anthropic pystray Pillow pywin32
       - name: Build .exe with PyInstaller
         run: |
           cd windows
