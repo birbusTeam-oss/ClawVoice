@@ -19,7 +19,7 @@ def main():
     settings = SettingsWindow(config)
 
     # Show settings on first run if no API keys configured
-    if not config.anthropic_key and not config.openai_key:
+    if not config.anthropic_key:
         settings.show()
 
     tray = TrayManager(app, clawvoice, settings)

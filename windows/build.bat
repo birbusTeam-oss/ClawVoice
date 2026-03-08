@@ -4,7 +4,7 @@ echo  ClawVoice Windows Build Script
 echo ========================================
 echo.
 echo Installing dependencies...
-pip install pyinstaller PyQt6 keyboard pyaudio requests pynput pyperclip anthropic openai pystray Pillow
+pip install pyinstaller PyQt6 keyboard pyaudio requests pynput pyperclip anthropic pystray Pillow
 echo.
 echo Building ClawVoice.exe...
 pyinstaller --onefile --windowed --name ClawVoice --icon=NONE run.py
