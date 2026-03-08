@@ -2,74 +2,110 @@
 
 ## Overview
 
-ClawVoice is a privacy-first voice dictation app. No backend. No accounts. No subscriptions.
+ClawVoice is a privacy-first voice dictation tool. No backend. No accounts. No subscriptions.
 
 ```
 [User speaks]
-     ↓
-[VoiceRecordingService] ← foreground service, mic capture
-     ↓ .m4a audio file
-[ClaudeApiClient.transcribeAudio()]
-     ↓ raw text (via Whisper or Claude)
-[ClaudeApiClient.cleanupTranscription()] ← optional Claude pass
-     ↓ clean text
-[TextInjectionService.injectText()]
-     ↓ AccessibilityService ACTION_SET_TEXT
-[Focused input field in any app]
+      ↓
+[Recording layer]        ← mic capture (WAV/M4A)
+      ↓ audio file
+[Claude API]             ← base64 audio → transcription + cleanup in one call
+      ↓ clean text
+[Text injection layer]   ← types result into focused field in any app
+      ↓
+[Wherever you're typing]
 ```
 
-## Components
+One API. One key. One company.
+
+---
+
+## Android components
 
 ### VoiceRecordingService
 - Android Foreground Service (type: microphone)
-- Uses MediaRecorder to capture M4A audio
-- Handles START/STOP intents
-- Coordinates the transcription pipeline
-- Shows notification during recording
+- Captures audio at 16kHz WAV via MediaRecorder
+- Handles START/STOP intents from the floating overlay button
+- Coordinates the full transcription pipeline
+- Shows persistent notification during recording
 
 ### ClaudeApiClient
-- Sends audio to transcription service (Whisper API or future Claude audio)
-- Optionally passes raw text to Claude for grammar/punctuation cleanup
-- User provides their own Anthropic API key — stored in SharedPreferences
-- Zero backend — all calls go directly to Anthropic
+- Encodes audio as base64
+- Sends directly to `api.anthropic.com/v1/messages` with Claude Haiku
+- Claude transcribes AND cleans up in one call — no separate cleanup pass needed
+- Certificate pinned to `api.anthropic.com` (rejects MITM attacks)
+- API key stored in Android Keystore via EncryptedSharedPreferences (AES256-GCM)
 
 ### TextInjectionService
 - Android AccessibilityService
-- Traverses the active window node tree to find focused editable fields
-- Uses ACTION_SET_TEXT to inject transcribed text
-- Works across ALL apps — no app-specific integrations needed
+- Walks the active window node tree to find the focused editable field
+- Injects transcribed text via `ACTION_SET_TEXT`
+- Works in ALL apps — no app-specific integrations
+
+### SecureStorage
+- Wraps Android Keystore with AES256-GCM encryption
+- API key never stored in plaintext anywhere on the device
+- Even with physical device access, key cannot be extracted without the user's PIN/biometrics
 
 ### MainActivity
-- Settings UI: API key entry, accessibility service toggle
-- Floating overlay button (planned)
-- Recording status display
+- Settings UI: API key input, permission status, how-to guide
+- Dark theme, modern card layout
 
-## Transcription Strategy
+---
 
-**Current:** Placeholder (returns dummy text)
+## Windows components
 
-**Phase 1:** Whisper API (OpenAI) for speech-to-text
+### VoiceRecordingService (recorder.py)
+- Captures microphone input at 16kHz via PyAudio
+- Saves to temporary WAV file
+- Start/stop controlled by global hotkey (Right Alt)
 
-**Phase 2:** Claude for cleanup pass
+### Transcriber (transcriber.py)
+- Encodes WAV as base64
+- Sends to Claude API — transcription and cleanup in one call
+- Falls back gracefully if API call fails
 
-**Phase 3 (future):** Claude native audio
+### TextInjector (injector.py)
+- Clipboard-based injection: copies text → simulates Ctrl+V in focused field
+- Works in any Windows app
 
-**Phase 4 (future):** Local Whisper (offline)
+### Config (config.py)
+- Stores API key in `%APPDATA%\ClawVoice\config.json`
+- Settings window (settings.py): dark PyQt6 UI, frameless window
 
-## Privacy Model
+### TrayManager (tray.py)
+- System tray icon with color status:
+  - 🟣 Purple = idle, ready
+  - 🔴 Red = recording
+  - 🟡 Yellow = transcribing
+- Right-click menu: Settings, Quit
 
-- Audio recorded locally to app cache
-- Sent directly to Anthropic API (or OpenAI for Whisper)
-- Deleted after transcription
-- No server, no logging, no account
-- API key stored in Android SharedPreferences (encrypted)
+---
 
-## Permissions Required
+## Privacy model
 
+| Step | Where it goes |
+|------|--------------|
+| Audio captured | Stays on device (temp file) |
+| Sent to | `api.anthropic.com` only (cert pinned) |
+| Deleted after | Immediately after transcription |
+| API key | Encrypted on device, never transmitted |
+| Usage data | Not collected. Ever. |
+
+---
+
+## Permissions
+
+### Android
 | Permission | Why |
 |-----------|-----|
 | RECORD_AUDIO | Capture microphone |
-| INTERNET | Call Anthropic/OpenAI APIs |
-| SYSTEM_ALERT_WINDOW | Floating overlay button |
-| FOREGROUND_SERVICE | Keep recording service alive |
+| INTERNET | Call Anthropic API |
+| SYSTEM_ALERT_WINDOW | Floating mic overlay button |
+| FOREGROUND_SERVICE | Keep recording service alive in background |
 | BIND_ACCESSIBILITY_SERVICE | Inject text into any app |
+| QUERY_ALL_PACKAGES | List installed apps for future features |
+
+### Windows
+- Microphone access (requested at runtime)
+- No admin rights required

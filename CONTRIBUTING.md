@@ -1,49 +1,61 @@
 # Contributing to ClawVoice
 
-Thanks for wanting to help! ClawVoice is built for developers by developers.
+Thanks for wanting to help. ClawVoice is built by a small team and we welcome contributions.
 
-## Getting Started
-
-1. Fork the repo
-2. Clone your fork
-3. Open `android/` in Android Studio
-4. Create a `local.properties` with your API key for testing (never commit this)
-
-## Project Structure
+## Project structure
 
 ```
-android/          ← Android app (Kotlin)
-windows/          ← Windows app (coming soon)
-docs/             ← Architecture docs
+android/          ← Android app (Kotlin, min SDK 26)
+windows/          ← Windows app (Python + PyQt6)
+docs/             ← Architecture and documentation
+.github/          ← GitHub Actions build workflows
+```
+
+## Getting started
+
+```bash
+git clone https://github.com/birbusTeam-oss/ClawVoice
+```
+
+**Android:** Open `android/` in Android Studio. Get an Anthropic API key from console.anthropic.com for testing — store it in the app settings, never hardcode it.
+
+**Windows:** 
+```bash
+cd windows
+pip install -r requirements.txt
+python run.py
 ```
 
 ## Guidelines
 
+- **No telemetry** — we collect zero data. Don't add any.
+- **No new API dependencies** — ClawVoice uses Anthropic only. Keep it that way.
+- **Privacy first** — audio goes: device → Anthropic API. Nothing else.
+- **API keys** — never hardcode. Always use encrypted storage or user input.
 - **Android:** Follow standard Kotlin conventions. Min SDK 26.
-- **No telemetry:** We don't collect data. Don't add any.
-- **API keys:** Never hardcode. Always use SharedPreferences or user input.
-- **Privacy first:** Audio goes user → Anthropic API. That's it.
+- **Windows:** Python 3.11+, PyQt6 for UI.
 
-## Pull Requests
+## Pull requests
 
-- One feature/fix per PR
-- Add a short description of what and why
-- Test on a real device if possible (emulator for basic stuff is fine)
+- One feature or fix per PR
+- Short description of what and why
+- Test on a real device if possible
 
-## Issues
+## Reporting bugs
 
-Found a bug? Open an issue with:
-- Android version
+Open an issue with:
+- Platform (Windows / Android version)
 - Steps to reproduce
 - What you expected vs what happened
 
-## Roadmap Ideas
+## Ideas for contribution
 
-- [ ] Real Whisper API integration (transcription)
-- [ ] Floating overlay button
-- [ ] Volume button trigger
-- [ ] Windows app (WinRT + accessibility)
-- [ ] Custom Claude prompts for formatting style
-- [ ] Offline mode (local Whisper)
+- [ ] macOS app (Swift + Accessibility API)
+- [ ] Linux app (GTK + AT-SPI)
+- [ ] Hotkey customization (Windows)
+- [ ] Offline mode using local Whisper
+- [ ] Custom Claude prompt styles (formal, casual, bullet points)
+- [ ] Volume button trigger (Android)
+- [ ] Auto-punctuation toggle
 
-Jump in on any open issue marked `good first issue`.
+Open issues marked `good first issue` are a good starting point.
