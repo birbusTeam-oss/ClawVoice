@@ -12,7 +12,7 @@ No subscription. No backend. No data collection. Just your API key and your voic
 
 | Platform | File | Requirements |
 |----------|------|--------------|
-| **Windows** | [⬇️ ClawVoice.exe](https://github.com/birbusTeam-oss/ClawVoice/releases/latest) | Windows 10/11 — no install needed |
+| **Windows** | [⬇️ ClawVoice-Setup.exe](https://github.com/birbusTeam-oss/ClawVoice/releases/latest) | Windows 10/11 |
 
 > macOS support coming soon.
 

@@ -2,119 +2,58 @@ name: Build ClawVoice
 
 on:
   push:
-    tags:
-      - 'v*'
+    branches: [main]
+    tags: ['v*']
   workflow_dispatch:
 
 jobs:
   build-windows:
-    name: Build Windows .exe
+    name: Build Windows Installer
     runs-on: windows-latest
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-      - name: Set up Python
-        uses: actions/setup-python@v5
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
         with:
           python-version: '3.11'
-      - name: Install dependencies
+
+      - name: Install Python dependencies
         run: |
           cd windows
           pip install pyinstaller PyQt6 keyboard pyaudio requests pynput pyperclip anthropic pystray Pillow pywin32
+
       - name: Build .exe with PyInstaller
         run: |
           cd windows
           pyinstaller --onefile --windowed --name ClawVoice --icon=assets/icon.ico --add-data "assets;assets" run.py
-      - name: Build NSIS Installer
+
+      - name: Install NSIS
+        run: choco install nsis -y
+
+      - name: Build installer
         run: |
-          choco install nsis -y
           cd windows
           makensis installer.nsi
-          move ClawVoice-Setup.exe dist\ClawVoice-Setup.exe
-      - name: Upload Windows artifacts
+
+      - name: Upload installer artifact
         uses: actions/upload-artifact@v4
         with:
-          name: ClawVoice-Windows
-          path: |
-            windows/dist/ClawVoice.exe
-            windows/dist/ClawVoice-Setup.exe
+          name: ClawVoice-Setup
+          path: windows/ClawVoice-Setup.exe
 
-  build-android:
-    name: Build Android APK
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-      - name: Set up Java 17
-        uses: actions/setup-java@v4
-        with:
-          java-version: '17'
-          distribution: 'temurin'
-      - name: Set up Android SDK
-        uses: android-actions/setup-android@v3
-      - name: Make Gradle executable
-        run: chmod +x android/gradlew
-      - name: Build debug APK
-        run: |
-          cd android
-          ./gradlew assembleDebug --stacktrace
-      - name: Upload Android artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: ClawVoice-Android
-          path: android/app/build/outputs/apk/debug/app-debug.apk
-
-  release:
+  publish-release:
     name: Publish Release
-    needs: [build-windows, build-android]
-    runs-on: ubuntu-latest
+    needs: build-windows
     if: startsWith(github.ref, 'refs/tags/')
+    runs-on: ubuntu-latest
     steps:
-      - name: Download Windows build
-        uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v4
         with:
-          name: ClawVoice-Windows
-          path: ./dist
-      - name: Download Android build
-        uses: actions/download-artifact@v4
+          name: ClawVoice-Setup
+
+      - name: Publish GitHub Release
+        uses: softprops/action-gh-release@v1
         with:
-          name: ClawVoice-Android
-          path: ./dist
-      - name: Rename files
-        run: |
-          mv ./dist/ClawVoice.exe "./dist/ClawVoice-${{ github.ref_name }}-Windows.exe"
-          mv ./dist/ClawVoice-Setup.exe "./dist/ClawVoice-${{ github.ref_name }}-Setup.exe"
-          mv ./dist/app-debug.apk "./dist/ClawVoice-${{ github.ref_name }}-Android.apk"
-      - name: Create Release
-        uses: softprops/action-gh-release@v2
-        with:
-          name: "ClawVoice ${{ github.ref_name }}"
-          body: |
-            ## ClawVoice ${{ github.ref_name }} 🎙️
-
-            Open source voice dictation for any app, powered by Claude AI.
-
-            ### Download
-            | Platform | File | Instructions |
-            |----------|------|-------------|
-            | Windows (Installer) | `ClawVoice-${{ github.ref_name }}-Setup.exe` | Run installer, shortcut added to desktop |
-            | Windows (Portable) | `ClawVoice-${{ github.ref_name }}-Windows.exe` | Double-click to run |
-            | Android | `ClawVoice-${{ github.ref_name }}-Android.apk` | Enable unknown sources, tap to install |
-
-            ### First time setup
-            1. Launch the app
-            2. Enter your Anthropic API key (get one free at console.anthropic.com)
-            3. **Windows:** Hold Right Alt anywhere to dictate
-            4. **Android:** Grant overlay + accessibility permissions, then use the floating button
-
-            ### Privacy
-            Your audio goes directly from your device to Anthropic's API.
-            We have zero servers. We collect zero data. Ever.
-
-            **Built by the Birbus team** 🐦
-          files: |
-            ./dist/ClawVoice-${{ github.ref_name }}-Windows.exe
-            ./dist/ClawVoice-${{ github.ref_name }}-Setup.exe
-            ./dist/ClawVoice-${{ github.ref_name }}-Android.apk
-          draft: false
-          prerelease: false
+          files: ClawVoice-Setup.exe
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
