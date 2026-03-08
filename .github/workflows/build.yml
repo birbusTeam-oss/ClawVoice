@@ -28,12 +28,13 @@ jobs:
           pyinstaller --onefile --windowed --name ClawVoice --icon=assets/icon.ico --add-data "assets;assets" run.py
 
       - name: Install NSIS
-        run: choco install nsis -y
+        run: choco install nsis -y --no-progress
 
       - name: Build installer
+        shell: cmd
         run: |
           cd windows
-          makensis installer.nsi
+          "C:\Program Files (x86)\NSIS\makensis.exe" installer.nsi
 
       - name: Upload installer artifact
         uses: actions/upload-artifact@v4
