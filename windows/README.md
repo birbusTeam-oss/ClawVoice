@@ -1,25 +1,53 @@
-# ClawVoice for Windows
+# ClawVoice for Windows 🖥️
 
 Hold **Right Alt** → speak → release → text appears wherever you're typing.
 
-## Setup
-1. Install Python 3.11+
-2. `pip install -r requirements.txt`
-3. `python run.py`
-4. Right-click tray icon → Settings → add your API keys
+No Python. No installation. Just download and run.
 
-## API Keys needed
-- **Anthropic** (Claude cleanup): get at console.anthropic.com
-- **OpenAI** (Whisper transcription): get at platform.openai.com
+---
 
-Both have free tiers. Typical usage costs pennies per day.
+## Download & Run
 
-## Build standalone .exe
-`pyinstaller --onefile --windowed --name ClawVoice run.py`
+1. Download **ClawVoice.exe** from [github.com/birbusTeam-oss/ClawVoice/releases/latest](https://github.com/birbusTeam-oss/ClawVoice/releases/latest)
+2. Double-click `ClawVoice.exe`
+3. If Windows shows a security warning → click **More info → Run anyway**
+4. ClawVoice appears in your system tray (bottom right corner)
+5. Right-click tray icon → **Settings**
+6. Paste your Anthropic API key → **Save**
+7. Hold **Right Alt** anywhere to start dictating
+
+---
+
+## Get your API key
+
+Free at [console.anthropic.com](https://console.anthropic.com) — that's the only key you need.
+
+---
 
 ## How it works
-1. Hold Right Alt — mic starts recording
-2. Release Right Alt — recording stops
-3. Audio sent to Whisper API for transcription
-4. Raw text cleaned up by Claude (fixes grammar, removes filler words)
-5. Final text typed into whatever field you're in
+
+1. Hold **Right Alt** — mic starts recording (tray turns 🔴 red)
+2. Release **Right Alt** — recording stops (tray turns 🟡 yellow while transcribing)
+3. Claude transcribes and cleans up your speech
+4. Text is typed into whatever field you were in (tray turns 🟣 purple)
+
+---
+
+## Privacy
+
+Your audio goes directly from your mic to Anthropic's API. We have no servers. We store nothing.
+
+---
+
+## For developers — build from source
+
+```bash
+git clone https://github.com/birbusTeam-oss/ClawVoice
+cd windows
+pip install -r requirements.txt
+python run.py
+
+# Build your own .exe
+pip install pyinstaller
+pyinstaller --onefile --windowed --name ClawVoice run.py
+```
