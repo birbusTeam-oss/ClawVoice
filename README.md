@@ -34,4 +34,4 @@ Bring your own Claude API key. Your audio never touches our servers — it goes 
 ## Contributing
 PRs welcome! See CONTRIBUTING.md.
 
-Built by the Birbus team 🐦
+Built by the Birbus Team
