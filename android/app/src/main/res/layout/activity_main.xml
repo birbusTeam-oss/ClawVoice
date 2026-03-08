@@ -2,88 +2,300 @@
 <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:padding="24dp">
+    android:background="#0D0D14"
+    android:fillViewport="true">
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
-        android:gravity="center_horizontal">
+        android:padding="24dp">
 
-        <TextView
-            android:layout_width="wrap_content"
+        <!-- Header -->
+        <LinearLayout
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="🎙️ ClawVoice"
-            android:textSize="28sp"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:layout_marginBottom="32dp"
+            android:layout_marginTop="16dp">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="🎙️"
+                android:textSize="36sp"
+                android:layout_marginEnd="16dp" />
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:orientation="vertical">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="ClawVoice"
+                    android:textSize="24sp"
+                    android:textStyle="bold"
+                    android:textColor="#FFFFFF" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Open source voice dictation"
+                    android:textSize="13sp"
+                    android:textColor="#6B6B8A" />
+
+            </LinearLayout>
+
+        </LinearLayout>
+
+        <!-- API Key Card -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:background="@drawable/bg_card_modern"
+            android:padding="20dp"
+            android:layout_marginBottom="16dp">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="ANTHROPIC API KEY"
+                android:textSize="10sp"
+                android:textStyle="bold"
+                android:textColor="#6B6B8A"
+                android:letterSpacing="0.15"
+                android:layout_marginBottom="12dp" />
+
+            <EditText
+                android:id="@+id/et_api_key"
+                android:layout_width="match_parent"
+                android:layout_height="52dp"
+                android:hint="sk-ant-api03-..."
+                android:textColorHint="#3A3A5A"
+                android:textColor="#FFFFFF"
+                android:textSize="13sp"
+                android:fontFamily="monospace"
+                android:background="@drawable/bg_input"
+                android:paddingStart="16dp"
+                android:paddingEnd="16dp"
+                android:inputType="textPassword"
+                android:layout_marginBottom="12dp" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Get your free key at console.anthropic.com"
+                android:textSize="12sp"
+                android:textColor="#7C6EE0" />
+
+        </LinearLayout>
+
+        <!-- Status Card -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:background="@drawable/bg_card_modern"
+            android:padding="20dp"
+            android:layout_marginBottom="16dp">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="PERMISSIONS"
+                android:textSize="10sp"
+                android:textStyle="bold"
+                android:textColor="#6B6B8A"
+                android:letterSpacing="0.15"
+                android:layout_marginBottom="16dp" />
+
+            <!-- Overlay Permission -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:layout_marginBottom="12dp">
+
+                <TextView
+                    android:id="@+id/iv_overlay_status"
+                    android:layout_width="20dp"
+                    android:layout_height="20dp"
+                    android:text="○"
+                    android:textSize="16sp"
+                    android:textColor="#6B6B8A"
+                    android:gravity="center"
+                    android:layout_marginEnd="12dp" />
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:orientation="vertical">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Overlay Permission"
+                        android:textSize="14sp"
+                        android:textColor="#FFFFFF" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Required to show the floating mic button"
+                        android:textSize="11sp"
+                        android:textColor="#6B6B8A" />
+
+                </LinearLayout>
+
+                <Button
+                    android:id="@+id/btn_grant_overlay"
+                    android:layout_width="wrap_content"
+                    android:layout_height="32dp"
+                    android:text="Grant"
+                    android:textSize="12sp"
+                    android:backgroundTint="#7C6EE0"
+                    android:textColor="#FFFFFF"
+                    style="@style/Widget.Material3.Button" />
+
+            </LinearLayout>
+
+            <!-- Accessibility Permission -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical">
+
+                <TextView
+                    android:id="@+id/iv_accessibility_status"
+                    android:layout_width="20dp"
+                    android:layout_height="20dp"
+                    android:text="○"
+                    android:textSize="16sp"
+                    android:textColor="#6B6B8A"
+                    android:gravity="center"
+                    android:layout_marginEnd="12dp" />
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:orientation="vertical">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Accessibility Service"
+                        android:textSize="14sp"
+                        android:textColor="#FFFFFF" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Required to inject text into any app"
+                        android:textSize="11sp"
+                        android:textColor="#6B6B8A" />
+
+                </LinearLayout>
+
+                <Button
+                    android:id="@+id/btn_grant_accessibility"
+                    android:layout_width="wrap_content"
+                    android:layout_height="32dp"
+                    android:text="Grant"
+                    android:textSize="12sp"
+                    android:backgroundTint="#7C6EE0"
+                    android:textColor="#FFFFFF"
+                    style="@style/Widget.Material3.Button" />
+
+            </LinearLayout>
+
+        </LinearLayout>
+
+        <!-- How it works card -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:background="@drawable/bg_card_modern"
+            android:padding="20dp"
+            android:layout_marginBottom="24dp">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="HOW TO USE"
+                android:textSize="10sp"
+                android:textStyle="bold"
+                android:textColor="#6B6B8A"
+                android:letterSpacing="0.15"
+                android:layout_marginBottom="16dp" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="① Tap the floating 🎙️ button"
+                android:textSize="13sp"
+                android:textColor="#FFFFFF"
+                android:layout_marginBottom="8dp" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="② Speak naturally"
+                android:textSize="13sp"
+                android:textColor="#FFFFFF"
+                android:layout_marginBottom="8dp" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="③ Tap again — text appears in any app"
+                android:textSize="13sp"
+                android:textColor="#FFFFFF" />
+
+        </LinearLayout>
+
+        <!-- Save Button -->
+        <Button
+            android:id="@+id/btn_save"
+            android:layout_width="match_parent"
+            android:layout_height="52dp"
+            android:text="Save Settings"
+            android:textSize="15sp"
             android:textStyle="bold"
-            android:layout_marginBottom="8dp" />
+            android:backgroundTint="#7C6EE0"
+            android:textColor="#FFFFFF"
+            android:layout_marginBottom="12dp"
+            style="@style/Widget.Material3.Button" />
 
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Voice dictation powered by Claude AI"
-            android:textSize="14sp"
-            android:layout_marginBottom="32dp" />
-
-        <!-- Accessibility Status -->
-        <TextView
-            android:id="@+id/accessibilityStatus"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Checking accessibility..."
-            android:textSize="14sp"
-            android:layout_marginBottom="8dp" />
-
+        <!-- Start service button -->
         <Button
-            android:id="@+id/openAccessibilityBtn"
+            android:id="@+id/btn_start"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Open Accessibility Settings"
-            android:layout_marginBottom="32dp" />
+            android:layout_height="52dp"
+            android:text="Start ClawVoice"
+            android:textSize="15sp"
+            android:backgroundTint="#1A1A28"
+            android:textColor="#7C6EE0"
+            android:layout_marginBottom="24dp"
+            style="@style/Widget.Material3.Button.OutlinedButton" />
 
-        <!-- API Key Setup -->
+        <!-- Version -->
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Anthropic API Key"
-            android:textStyle="bold"
-            android:layout_marginBottom="4dp" />
-
-        <EditText
-            android:id="@+id/apiKeyInput"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:hint="sk-ant-..."
-            android:inputType="textPassword"
-            android:layout_marginBottom="8dp" />
-
-        <Button
-            android:id="@+id/saveApiKeyBtn"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Save API Key"
-            android:layout_marginBottom="32dp" />
-
-        <!-- Record Controls -->
-        <TextView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Recording"
-            android:textStyle="bold"
-            android:layout_marginBottom="8dp" />
-
-        <Button
-            android:id="@+id/recordBtn"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="🎙️ Start Recording"
-            android:layout_marginBottom="8dp" />
-
-        <Button
-            android:id="@+id/stopBtn"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="⏹ Stop &amp; Transcribe" />
+            android:text="v0.1 — Built by the Birbus Team"
+            android:textSize="11sp"
+            android:textColor="#3A3A5A"
+            android:gravity="center" />
 
     </LinearLayout>
 </ScrollView>
