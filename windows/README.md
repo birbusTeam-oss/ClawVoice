@@ -1,6 +1,6 @@
 # ClawVoice for Windows 🖥️
 
-Hold **Right Alt** → speak → release → text appears wherever you're typing.
+Hold **Ctrl+Space** → speak → release → text appears wherever you're typing.
 
 No Python. No installation. Just download and run.
 
@@ -14,7 +14,7 @@ No Python. No installation. Just download and run.
 4. ClawVoice appears in your system tray (bottom right corner)
 5. Right-click tray icon → **Settings**
 6. Paste your Anthropic API key → **Save**
-7. Hold **Right Alt** anywhere to start dictating
+7. Hold **Ctrl+Space** anywhere to start dictating
 
 ---
 
@@ -26,10 +26,12 @@ Free at [console.anthropic.com](https://console.anthropic.com) — that's the on
 
 ## How it works
 
-1. Hold **Right Alt** — mic starts recording (tray turns 🔴 red)
-2. Release **Right Alt** — recording stops (tray turns 🟡 yellow while transcribing)
+1. Hold **Ctrl+Space** — mic starts recording (tray turns 🔴 red)
+2. Release **Ctrl+Space** — recording stops (tray turns 🟡 yellow while transcribing)
 3. Claude transcribes and cleans up your speech
-4. Text is typed into whatever field you were in (tray turns 🟣 purple)
+4. Text is typed into whatever field you were in
+
+> 🟣 Tray icon is **purple** when idle · **red** while recording · **yellow** while transcribing
 
 ---
 

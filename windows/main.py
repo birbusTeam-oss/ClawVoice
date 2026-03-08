@@ -19,12 +19,23 @@ class ClawVoice(QObject):
         self.recorder = AudioRecorder()
         self.injector = TextInjector()
         self.is_recording = False
+        self._hotkey_held = False
         self._setup_hotkey()
 
     def _setup_hotkey(self):
         import keyboard
-        keyboard.on_press_key("right alt", self._on_press, suppress=True)
-        keyboard.on_release_key("right alt", self._on_release, suppress=True)
+        keyboard.hook(self._key_handler)
+
+    def _key_handler(self, event):
+        import keyboard as kb
+        # Ctrl+Space = hold to talk
+        if event.name == 'space' and kb.is_pressed('ctrl'):
+            if event.event_type == 'down' and not self._hotkey_held:
+                self._hotkey_held = True
+                self._on_press(event)
+            elif event.event_type == 'up' and self._hotkey_held:
+                self._hotkey_held = False
+                self._on_release(event)
 
     def _on_press(self, e):
         if not self.is_recording:

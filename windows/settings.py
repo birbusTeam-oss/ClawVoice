@@ -115,7 +115,7 @@ class SettingsWindow(QWidget):
 
         hk_text = QVBoxLayout()
         hk_text.setSpacing(4)
-        h1 = QLabel("Hold Right Alt to dictate")
+        h1 = QLabel("Hold Ctrl+Space to dictate")
         h1.setObjectName("hotkeyTitle")
         h2 = QLabel("Release to transcribe and type into any app")
         h2.setObjectName("hotkeyDesc")
