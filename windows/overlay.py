@@ -15,9 +15,13 @@ class RecordingOverlay(QWidget):
         self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
         self.setAttribute(Qt.WidgetAttribute.WA_ShowWithoutActivating)
         self.setFocusPolicy(Qt.FocusPolicy.NoFocus)
-        self.setFixedSize(220, 52)
+        self.setFixedSize(280, 52)
         self._setup_ui()
         self._position()
+
+        self._auto_hide_timer = QTimer()
+        self._auto_hide_timer.setSingleShot(True)
+        self._auto_hide_timer.timeout.connect(self.hide_overlay)
 
     def _setup_ui(self):
         layout = QHBoxLayout(self)
@@ -61,18 +65,49 @@ class RecordingOverlay(QWidget):
         pass
 
     def show_recording(self):
+        self._auto_hide_timer.stop()
         self.dot.setStyleSheet("color: #ff4444; font-size: 13px;")
+        self.label.setStyleSheet("color: white; font-size: 13px; font-weight: 600; font-family: 'Segoe UI', sans-serif;")
         self.label.setText("Listening...")
         self._timer.start(500)
         self._position()
         self.show()
 
     def show_transcribing(self):
+        self._auto_hide_timer.stop()
         self._timer.stop()
         self.dot.setStyleSheet("color: #f0a500; font-size: 13px;")
+        self.label.setStyleSheet("color: white; font-size: 13px; font-weight: 600; font-family: 'Segoe UI', sans-serif;")
         self.label.setText("Transcribing...")
         self.show()
 
+    def show_error(self, message: str = "Something went wrong"):
+        """Show a red error message, then auto-hide after 3.5s."""
+        self._auto_hide_timer.stop()
+        self._timer.stop()
+        self.dot.setStyleSheet("color: #ff4444; font-size: 13px;")
+        self.label.setStyleSheet("color: #ff6666; font-size: 12px; font-weight: 600; font-family: 'Segoe UI', sans-serif;")
+        # Truncate long messages so they fit
+        if len(message) > 38:
+            message = message[:35] + "..."
+        self.label.setText(f"⚠ {message}")
+        self._position()
+        self.show()
+        self._auto_hide_timer.start(3500)
+
+    def show_success(self, word_count: int):
+        """Show '✓ N words injected' briefly, then auto-hide."""
+        self._auto_hide_timer.stop()
+        self._timer.stop()
+        self.dot.setStyleSheet("color: #2ecc71; font-size: 13px;")
+        self.label.setStyleSheet("color: #2ecc71; font-size: 13px; font-weight: 600; font-family: 'Segoe UI', sans-serif;")
+        word_label = "word" if word_count == 1 else "words"
+        self.label.setText(f"✓ {word_count} {word_label} injected")
+        self._position()
+        self.show()
+        self._auto_hide_timer.start(1800)
+
     def hide_overlay(self):
+        self._auto_hide_timer.stop()
         self._timer.stop()
         self.hide()

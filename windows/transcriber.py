@@ -16,23 +16,21 @@ class Transcriber:
     def __init__(self, config):
         self.config = config
 
-    def transcribe(self, audio_path: str) -> str | None:
+    def transcribe(self, audio_path: str) -> tuple[str | None, str | None]:
+        """Returns (text, error_message). One of them will be None."""
         if not self.config.anthropic_key:
-            print("No API key configured")
-            return None
+            return None, "No API key — open Settings to add one"
 
         try:
             file_size = os.path.getsize(audio_path)
 
             # Skip near-silence (< 1KB)
             if file_size < 1024:
-                print("Audio too short, skipping")
-                return None
+                return None, None  # silence, not an error
 
             # Hard cap — refuse to send huge files
             if file_size > MAX_AUDIO_MB * 1024 * 1024:
-                print(f"Audio too large ({file_size/1024/1024:.1f}MB), skipping")
-                return None
+                return None, f"Recording too long (>{MAX_AUDIO_MB}MB) — try shorter clips"
 
             with open(audio_path, 'rb') as f:
                 audio_data = base64.standard_b64encode(f.read()).decode('utf-8')
@@ -62,9 +60,21 @@ class Transcriber:
 
             text = message.content[0].text.strip()
             if text.lower() in ('', '[silence]', '[no speech detected]', '[inaudible]', '[nothing]'):
-                return None
-            return text
+                return None, None  # silence, not an error
+            return text, None
 
         except Exception as e:
-            print(f"Transcription error: {e}")
-            return None
+            err = str(e)
+            # Classify the error for a better user message
+            if "authentication" in err.lower() or "invalid x-api-key" in err.lower() or "api_key" in err.lower():
+                return None, "Invalid API key — update it in Settings"
+            elif "rate_limit" in err.lower() or "rate limit" in err.lower():
+                return None, "Rate limit hit — wait a moment and try again"
+            elif "timeout" in err.lower() or "timed out" in err.lower():
+                return None, "Transcription timed out — check your connection"
+            elif "connection" in err.lower() or "network" in err.lower():
+                return None, "Network error — check your internet connection"
+            elif "overloaded" in err.lower():
+                return None, "Claude is overloaded — try again in a moment"
+            else:
+                return None, f"Transcription error: {err[:60]}"

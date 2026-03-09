@@ -23,6 +23,7 @@ class TrayManager:
         self.tray = QSystemTrayIcon()
         self.clawvoice = clawvoice
         self.settings_window = settings_window
+        self._current_status = "idle"
 
         self.icons = {
             "idle":         QIcon(get_asset_path("tray_idle.ico")),
@@ -32,7 +33,7 @@ class TrayManager:
         }
 
         self.tray.setIcon(self.icons["idle"])
-        self.tray.setToolTip("ClawVoice — Hold Ctrl+Space to dictate")
+        self.tray.setToolTip("ClawVoice — Ready")
 
         menu = QMenu()
         menu.addAction("⚙️ Settings", settings_window.show)
@@ -45,13 +46,18 @@ class TrayManager:
 
         self.tray.show()
 
+    def update_status(self, status: str):
+        """Public method to update tray icon and tooltip for a given status."""
+        self._on_status(status)
+
     def _on_status(self, status: str):
+        self._current_status = status
         icon = self.icons.get(status, self.icons["idle"])
         self.tray.setIcon(icon)
         tooltips = {
-            "idle":         "ClawVoice — Hold Ctrl+Space to dictate",
-            "recording":    "🔴 Recording... release Ctrl+Space to stop",
-            "transcribing": "⏳ Transcribing with Claude...",
-            "error":        "⚠️ Check your API key in Settings",
+            "idle":         "ClawVoice — Ready",
+            "recording":    "ClawVoice — Recording... release Ctrl+Space to stop",
+            "transcribing": "ClawVoice — Transcribing...",
+            "error":        "ClawVoice — Error (see overlay for details)",
         }
         self.tray.setToolTip(tooltips.get(status, "ClawVoice"))

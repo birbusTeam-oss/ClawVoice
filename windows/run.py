@@ -29,14 +29,32 @@ def main():
     tray = TrayManager(app, clawvoice, settings)
 
     def on_status(status):
+        tray.update_status(status)
         if status == "recording":
             overlay.show_recording()
         elif status == "transcribing":
             overlay.show_transcribing()
-        else:
-            overlay.hide_overlay()
+        elif status == "idle":
+            # hide_overlay only if we didn't just show success/error
+            # (success/error handle their own auto-hide timers)
+            pass
+        elif status == "error":
+            # overlay error is handled via error_occurred signal with message
+            pass
+
+    def on_transcription(text: str):
+        # Show success feedback: word count
+        word_count = len(text.split())
+        overlay.show_success(word_count)
+
+    def on_error(message: str):
+        overlay.show_error(message)
 
     clawvoice.status_changed.connect(on_status)
+    clawvoice.transcription_ready.connect(on_transcription)
+    clawvoice.error_occurred.connect(on_error)
+
+    # inject is connected in TrayManager already
     app.aboutToQuit.connect(clawvoice.shutdown)
 
     if not config.anthropic_key:

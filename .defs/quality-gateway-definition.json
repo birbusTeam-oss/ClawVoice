@@ -1,0 +1,74 @@
+{
+  "version": "1.0",
+  "project": "ClawVoice",
+  "skill": "tcc-quality-gates",
+  "output": {
+    "report_md": "docs/quality/quality-gate-report.md",
+    "report_json": "docs/quality/quality-gate-report.json",
+    "evidence_dir": "docs/quality/evidence/"
+  },
+  "gates": [
+    {
+      "id": "compile",
+      "name": "Compile / Build Health",
+      "description": "Python build with PyInstaller must exit 0, no import errors",
+      "blocking": true,
+      "checks": [
+        { "id": "pyinstaller-exit", "type": "boolean", "command": "cd windows && pyinstaller --onefile --windowed --name ClawVoice run.py", "pass_if": "exit_0" },
+        { "id": "pip-install", "type": "boolean", "command": "pip install -r windows/requirements.txt", "pass_if": "exit_0" }
+      ],
+      "thresholds": { "pass": 100, "warn": 80, "fail": 0 }
+    },
+    {
+      "id": "tests",
+      "name": "Automated Tests",
+      "description": "All tests must pass; 0 failures",
+      "blocking": true,
+      "checks": [
+        { "id": "pytest", "type": "ratio", "command": "pytest --tb=short -q 2>&1 | tail -5", "pass_if": "0 failed" }
+      ],
+      "thresholds": { "pass": 100, "warn": 90, "fail": 70 }
+    },
+    {
+      "id": "build-success",
+      "name": "Build Artifact Exists",
+      "description": "ClawVoice-Setup.exe must be produced",
+      "blocking": true,
+      "checks": [
+        { "id": "installer-exists", "type": "boolean", "command": "test -f windows/ClawVoice-Setup.exe", "pass_if": "exit_0" }
+      ],
+      "thresholds": { "pass": 100, "warn": 0, "fail": 0 }
+    },
+    {
+      "id": "no-regressions",
+      "name": "No Regressions",
+      "description": "Core voice capture and transcription flows still pass",
+      "blocking": true,
+      "checks": [
+        { "id": "smoke-test", "type": "boolean", "command": "python -c \"import run; print('import ok')\"", "pass_if": "exit_0" }
+      ],
+      "thresholds": { "pass": 100, "warn": 85, "fail": 70 }
+    },
+    {
+      "id": "evidence-provided",
+      "name": "Evidence Provided",
+      "description": "CI artifact URL or local installer path + build log must be attached",
+      "blocking": false,
+      "checks": [
+        { "id": "artifact-url", "type": "manual", "prompt": "Paste artifact URL or local path to ClawVoice-Setup.exe" },
+        { "id": "build-log", "type": "manual", "prompt": "Paste last 20 lines of build log" }
+      ],
+      "thresholds": { "pass": 100, "warn": 50, "fail": 0 }
+    },
+    {
+      "id": "reality-check-pass",
+      "name": "Reality Check Pass",
+      "description": "aa-reality-checker subagent must output APPROVED",
+      "blocking": true,
+      "checks": [
+        { "id": "reality-checker", "type": "manual", "prompt": "Spawn aa-reality-checker, provide build summary + evidence. Must return APPROVED." }
+      ],
+      "thresholds": { "pass": 100, "warn": 0, "fail": 0 }
+    }
+  ]
+}
