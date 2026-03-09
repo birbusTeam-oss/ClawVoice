@@ -57,7 +57,7 @@ jobs:
             echo "status=failure" >> $GITHUB_OUTPUT
           fi
 
-      - name: Upload installer
+      - name: Upload installer artifact
         if: success()
         uses: actions/upload-artifact@v4
         with:
@@ -66,10 +66,10 @@ jobs:
           retention-days: 30
 
   update-release:
-    name: Update v0.2 Release
+    name: Publish v0.2.1 Release
     needs: build-windows
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/main'
+    if: needs.build-windows.result == 'success'
     permissions:
       contents: write
     steps:
@@ -77,10 +77,31 @@ jobs:
         with:
           name: ClawVoice-Setup
 
-      - name: Upload to v0.2 release
+      - name: Publish release
         uses: softprops/action-gh-release@v1
         with:
-          tag_name: v0.2
+          tag_name: v0.2.1
+          name: ClawVoice v0.2.1
+          make_latest: true
+          body: |
+            ## ClawVoice v0.2.1
+
+            ### What's new
+            - Overlay shows error messages when transcription fails (auto-hides after 3.5s)
+            - Overlay shows word count after successful dictation
+            - Tray tooltip shows live status: Ready / Recording... / Transcribing...
+            - Fixed: recording now correctly stops when Ctrl+Space is released
+            - Better error messages: API auth, rate limits, mic permission denied, network timeout
+            - Edge case hardening: no mic detected, invalid API key format, clipboard preservation
+
+            ### Download & Install
+            1. Download `ClawVoice-Setup.exe` below
+            2. Run the installer — it will ask for your Anthropic API key on first launch
+            3. Hold `Ctrl+Space` to record, release to transcribe
+
+            ### Requirements
+            - Windows 10 or 11
+            - Your own [Anthropic API key](https://console.anthropic.com/)
           files: ClawVoice-Setup.exe
           fail_on_unmatched_files: false
         env:
@@ -115,12 +136,5 @@ jobs:
               \"agent\": \"github\",
               \"task_type\": \"ci_build\",
               \"task_summary\": \"$ICON [ClawVoice] Build $STATUS on $REF ($SHA_SHORT) — \\\"$COMMIT_MSG\\\" by $ACTOR\",
-              \"status\": \"$LOG_STATUS\",
-              \"metadata\": {
-                \"repo\": \"birbusTeam-oss/ClawVoice\",
-                \"sha\": \"$SHA_SHORT\",
-                \"branch\": \"$REF\",
-                \"actor\": \"$ACTOR\",
-                \"message\": \"$COMMIT_MSG\"
-              }
-            }" || echo "Hub log skipped (no HUB_URL secret)"
+              \"status\": \"$LOG_STATUS\"
+            }" || echo "Hub log skipped"

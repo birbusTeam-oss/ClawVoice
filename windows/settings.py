@@ -178,7 +178,7 @@ class SettingsWindow(QWidget):
         layout.addWidget(self.save_btn)
         layout.addSpacing(12)
 
-        version = QLabel("v0.2 — Built by the Birbus Team")
+        version = QLabel("v0.2.1 — Built by the Birbus Team")
         version.setObjectName("version")
         version.setAlignment(Qt.AlignmentFlag.AlignCenter)
         layout.addWidget(version)

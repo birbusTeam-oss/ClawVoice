@@ -1,5 +1,5 @@
 !define APP_NAME "ClawVoice"
-!define APP_VERSION "0.2"
+!define APP_VERSION "0.2.1"
 !define APP_EXE "ClawVoice.exe"
 
 Name "${APP_NAME} ${APP_VERSION}"
