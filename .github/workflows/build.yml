@@ -10,6 +10,8 @@ jobs:
   build-windows:
     name: Build Windows Installer
     runs-on: windows-latest
+    outputs:
+      build_status: ${{ steps.set_status.outputs.status }}
     steps:
       - uses: actions/checkout@v4
 
@@ -36,7 +38,19 @@ jobs:
           cd windows
           "C:\Program Files (x86)\NSIS\makensis.exe" installer.nsi
 
+      - name: Set status output
+        id: set_status
+        if: always()
+        shell: bash
+        run: |
+          if [ -f "windows/ClawVoice-Setup.exe" ]; then
+            echo "status=success" >> $GITHUB_OUTPUT
+          else
+            echo "status=failure" >> $GITHUB_OUTPUT
+          fi
+
       - name: Upload installer
+        if: success()
         uses: actions/upload-artifact@v4
         with:
           name: ClawVoice-Setup
@@ -62,3 +76,42 @@ jobs:
           fail_on_unmatched_files: false
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  log-to-hub:
+    name: Log to Nest Hub
+    needs: build-windows
+    runs-on: ubuntu-latest
+    if: always()
+    steps:
+      - name: Log build result to Hub
+        run: |
+          STATUS="${{ needs.build-windows.result }}"
+          SHA="${{ github.sha }}"
+          SHA_SHORT="${SHA:0:7}"
+          REF="${{ github.ref_name }}"
+          ACTOR="${{ github.actor }}"
+          COMMIT_MSG=$(echo "${{ github.event.head_commit.message }}" | head -1 | sed 's/"/\\"/g')
+
+          if [ "$STATUS" = "success" ]; then
+            ICON="✅"
+            LOG_STATUS="done"
+          else
+            ICON="❌"
+            LOG_STATUS="error"
+          fi
+
+          curl -s -X POST ${{ secrets.HUB_URL }}/api/log/task \
+            -H "Content-Type: application/json" \
+            -d "{
+              \"agent\": \"github\",
+              \"task_type\": \"ci_build\",
+              \"task_summary\": \"$ICON [ClawVoice] Build $STATUS on $REF ($SHA_SHORT) — \\\"$COMMIT_MSG\\\" by $ACTOR\",
+              \"status\": \"$LOG_STATUS\",
+              \"metadata\": {
+                \"repo\": \"birbusTeam-oss/ClawVoice\",
+                \"sha\": \"$SHA_SHORT\",
+                \"branch\": \"$REF\",
+                \"actor\": \"$ACTOR\",
+                \"message\": \"$COMMIT_MSG\"
+              }
+            }" || echo "Hub log skipped (no HUB_URL secret)"
