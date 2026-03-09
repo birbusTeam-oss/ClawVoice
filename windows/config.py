@@ -1,11 +1,13 @@
 import json
 import os
+import re
 from pathlib import Path
 
 
 class Config:
     CONFIG_DIR = Path(os.environ.get("APPDATA", "~")) / "ClawVoice"
     CONFIG_FILE = CONFIG_DIR / "config.json"
+    KEY_PATTERN = re.compile(r'^sk-ant-[a-zA-Z0-9\-_]{20,}$')
 
     def __init__(self):
         self.CONFIG_DIR.mkdir(parents=True, exist_ok=True)
@@ -15,14 +17,24 @@ class Config:
         if self.CONFIG_FILE.exists():
             try:
                 with open(self.CONFIG_FILE) as f:
-                    return json.load(f)
-            except:
-                pass
+                    data = json.load(f)
+                    if isinstance(data, dict):
+                        return data
+            except (json.JSONDecodeError, IOError) as e:
+                print(f"Config load error (using defaults): {e}")
+                # Back up corrupted config
+                try:
+                    self.CONFIG_FILE.rename(self.CONFIG_FILE.with_suffix('.json.bak'))
+                except Exception:
+                    pass
         return {}
 
     def _save(self):
-        with open(self.CONFIG_FILE, 'w') as f:
-            json.dump(self._data, f, indent=2)
+        try:
+            with open(self.CONFIG_FILE, 'w') as f:
+                json.dump(self._data, f, indent=2)
+        except IOError as e:
+            print(f"Config save error: {e}")
 
     @property
     def anthropic_key(self):
@@ -32,3 +44,6 @@ class Config:
     def anthropic_key(self, value):
         self._data["anthropic_key"] = value.strip()
         self._save()
+
+    def is_valid_key(self, key: str) -> bool:
+        return bool(self.KEY_PATTERN.match(key.strip()))

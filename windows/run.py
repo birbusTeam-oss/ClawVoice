@@ -2,7 +2,6 @@
 ClawVoice for Windows — Entry Point
 """
 import sys
-import os
 from PyQt6.QtWidgets import QApplication, QMessageBox
 from main import ClawVoice
 from tray import TrayManager
@@ -29,7 +28,6 @@ def main():
 
     tray = TrayManager(app, clawvoice, settings)
 
-    # Connect overlay to status changes
     def on_status(status):
         if status == "recording":
             overlay.show_recording()
@@ -40,7 +38,12 @@ def main():
 
     clawvoice.status_changed.connect(on_status)
 
-    # Show settings on first run (no API key yet)
+    # Clean shutdown
+    def on_quit():
+        clawvoice.shutdown()
+
+    app.aboutToQuit.connect(on_quit)
+
     if not config.anthropic_key:
         settings.show()
     else:

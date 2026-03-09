@@ -1,6 +1,7 @@
-from PyQt6.QtWidgets import QWidget, QHBoxLayout, QLabel
+from PyQt6.QtWidgets import QWidget, QHBoxLayout, QLabel, QApplication
 from PyQt6.QtCore import Qt, QTimer
 from PyQt6.QtGui import QPainter, QColor
+
 
 class RecordingOverlay(QWidget):
     def __init__(self):
@@ -29,10 +30,7 @@ class RecordingOverlay(QWidget):
         layout.addWidget(self.dot)
 
         self.label = QLabel("Listening...")
-        self.label.setStyleSheet("""
-            color: white; font-size: 13px;
-            font-weight: 600; font-family: 'Segoe UI', sans-serif;
-        """)
+        self.label.setStyleSheet("color: white; font-size: 13px; font-weight: 600; font-family: 'Segoe UI', sans-serif;")
         self.label.setFocusPolicy(Qt.FocusPolicy.NoFocus)
         layout.addWidget(self.label)
         layout.addStretch()
@@ -40,7 +38,6 @@ class RecordingOverlay(QWidget):
         self._pulse_state = True
         self._timer = QTimer()
         self._timer.timeout.connect(self._pulse)
-        self._timer.start(500)
 
     def _pulse(self):
         self._pulse_state = not self._pulse_state
@@ -48,19 +45,20 @@ class RecordingOverlay(QWidget):
         self.dot.setStyleSheet(f"color: {color}; font-size: 13px;")
 
     def _position(self):
-        from PyQt6.QtWidgets import QApplication
-        screen = QApplication.primaryScreen().geometry()
-        self.move((screen.width() - self.width()) // 2, screen.height() - 120)
+        screen = QApplication.primaryScreen()
+        if screen:
+            geo = screen.geometry()
+            self.move((geo.width() - self.width()) // 2, geo.height() - 120)
 
     def paintEvent(self, event):
         painter = QPainter(self)
         painter.setRenderHint(QPainter.RenderHint.Antialiasing)
         painter.setBrush(QColor(20, 16, 48, 235))
         painter.setPen(QColor(107, 94, 205, 160))
-        painter.drawRoundedRect(self.rect().adjusted(1,1,-1,-1), 26, 26)
+        painter.drawRoundedRect(self.rect().adjusted(1, 1, -1, -1), 26, 26)
 
     def focusInEvent(self, event):
-        pass  # Never accept focus
+        pass
 
     def show_recording(self):
         self.dot.setStyleSheet("color: #ff4444; font-size: 13px;")
