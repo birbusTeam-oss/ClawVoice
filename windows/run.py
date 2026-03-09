@@ -37,14 +37,11 @@ def main():
             overlay.hide_overlay()
 
     clawvoice.status_changed.connect(on_status)
-
-    # Clean shutdown
-    def on_quit():
-        clawvoice.shutdown()
-
-    app.aboutToQuit.connect(on_quit)
+    app.aboutToQuit.connect(clawvoice.shutdown)
 
     if not config.anthropic_key:
+        # First run — show settings, prevent closing until key is saved
+        settings.set_required(True)
         settings.show()
     else:
         tray.tray.showMessage("ClawVoice", "Ready! Hold Ctrl+Space to dictate.", msecs=3000)

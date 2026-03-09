@@ -26,6 +26,8 @@ SetCompressor lzma
 !insertmacro MUI_LANGUAGE "English"
 
 Section "ClawVoice" SecMain
+    ; Wipe any existing config for fresh install
+    RMDir /r "$APPDATA\ClawVoice"
     SetOutPath "$INSTDIR"
     File "dist\${APP_EXE}"
 
@@ -67,4 +69,5 @@ Section "Uninstall"
     Delete "$DESKTOP\${APP_NAME}.lnk"
     DeleteRegValue HKCU "Software\Microsoft\Windows\CurrentVersion\Run" "${APP_NAME}"
     DeleteRegKey HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\${APP_NAME}"
+    RMDir /r "$APPDATA\ClawVoice"
 SectionEnd
