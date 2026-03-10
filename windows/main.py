@@ -44,13 +44,16 @@ class ClawVoice(QObject):
 
     def _key_handler(self, event):
         import keyboard as kb
-        if event.name == 'alt' and kb.is_pressed('ctrl'):
-            if event.event_type == 'down' and not self._hotkey_held:
-                self._hotkey_held = True
-                self._on_press()
-            elif event.event_type == 'up' and self._hotkey_held:
-                self._hotkey_held = False
-                self._on_release()
+        ctrl = kb.is_pressed('ctrl')
+        alt = kb.is_pressed('alt')
+        # Both held -> start recording
+        if ctrl and alt and not self._hotkey_held:
+            self._hotkey_held = True
+            self._on_press()
+        # Either released while recording -> stop
+        elif self._hotkey_held and not (ctrl and alt):
+            self._hotkey_held = False
+            self._on_release()
 
     def _on_press(self):
         if not self.is_recording:
@@ -88,11 +91,6 @@ class ClawVoice(QObject):
             audio_path = self.recorder.stop()
             if not audio_path:
                 self.status_changed.emit("idle")
-                return
-
-            if not self.config.anthropic_key:
-                self.error_occurred.emit("No API key — open Settings to add one")
-                self.status_changed.emit("error")
                 return
 
             transcriber = Transcriber(self.config)

@@ -60,13 +60,7 @@ def main():
     app.aboutToQuit.connect(clawvoice.shutdown)
 
     settings.append_log("ClawVoice started — ready to dictate")
-
-    if not config.anthropic_key:
-        # First run — show settings, prevent closing until key is saved
-        settings.set_required(True)
-        settings.show()
-    else:
-        tray.tray.showMessage("ClawVoice", "Ready! Hold Ctrl+Alt to dictate.", msecs=3000)
+    tray.tray.showMessage("ClawVoice", "Ready! Hold Ctrl+Alt to dictate.", msecs=3000)
 
     sys.exit(app.exec())
 

@@ -115,7 +115,7 @@ class SettingsWindow(QWidget):
         outer.addWidget(self.key_status)
 
         self.api_input = QLineEdit()
-        self.api_input.setPlaceholderText("Paste new Anthropic API key...")
+        self.api_input.setPlaceholderText("sk-ant-... (not required for dictation)")
         whisper_note = QLabel("Voice transcription runs locally — no API key needed")
         whisper_note.setStyleSheet("font-size: 11px; color: rgba(255,255,255,0.3); margin-top: 4px; margin-bottom: 4px;")
         outer.addWidget(whisper_note)
