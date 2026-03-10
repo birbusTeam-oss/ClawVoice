@@ -1,9 +1,11 @@
 """
 ClawVoice for Windows — Hold Ctrl+Alt to dictate.
+Crash-resilient: stays running no matter what.
 """
 import threading
 import os
 import logging
+import time
 from PyQt6.QtCore import QObject, pyqtSignal
 
 log = logging.getLogger("clawvoice")
@@ -19,7 +21,8 @@ class ClawVoice(QObject):
         self.config = config
         self.is_recording = False
         self._hotkey_held = False
-        self._injecting = False  # guard against re-entrant hotkey during paste
+        self._injecting = False
+        self._processing = False  # prevent overlapping transcriptions
         self._keyboard_hook = None
         self._recorder = None
         self._setup_recorder()
@@ -30,29 +33,27 @@ class ClawVoice(QObject):
             from recorder import AudioRecorder
             self._recorder = AudioRecorder()
         except Exception as e:
-            self.error_occurred.emit(f"Audio init failed: {e}")
+            log.error(f"Audio init failed: {e}")
 
     def _setup_hotkey(self):
         try:
             import keyboard
             self._keyboard_hook = keyboard.hook(self._key_handler)
+            log.info("Hotkey registered: Ctrl+Alt")
         except Exception as e:
             msg = str(e)
             if "admin" in msg.lower() or "permission" in msg.lower():
-                self.error_occurred.emit("Needs Administrator — right-click ClawVoice → Run as Admin")
+                log.error("Needs Administrator — right-click ClawVoice → Run as Admin")
             else:
-                self.error_occurred.emit(f"Hotkey setup failed: {msg}")
+                log.error(f"Hotkey setup failed: {msg}")
 
     def _key_handler(self, event):
-        # Skip all keyboard events while we're injecting text (Ctrl+V simulation)
         if self._injecting:
             return
-
         try:
             import keyboard as kb
             ctrl = kb.is_pressed('ctrl')
             alt = kb.is_pressed('alt')
-
             if ctrl and alt and not self._hotkey_held:
                 self._hotkey_held = True
                 self._on_press()
@@ -63,9 +64,8 @@ class ClawVoice(QObject):
             pass
 
     def _on_press(self):
-        if not self.is_recording and self._recorder:
+        if not self.is_recording and not self._processing and self._recorder:
             self.is_recording = True
-            log.info("Recording started...")
             self.status_changed.emit("recording")
             threading.Thread(target=self._record, daemon=True).start()
 
@@ -73,7 +73,6 @@ class ClawVoice(QObject):
         if self.is_recording and self._recorder:
             self.is_recording = False
             self._recorder.recording = False
-            log.info("Recording stopped, transcribing...")
             self.status_changed.emit("transcribing")
 
     def _record(self):
@@ -81,24 +80,21 @@ class ClawVoice(QObject):
             self._recorder.start()
         except Exception as e:
             err = str(e)
-            if "permission" in err.lower() or "access" in err.lower():
-                self.error_occurred.emit("Microphone permission denied")
-            elif "not available" in err.lower() or "no device" in err.lower():
-                self.error_occurred.emit("No microphone found")
-            else:
-                self.error_occurred.emit(f"Mic error: {err}")
+            log.error(f"Mic error: {err}")
+            self.error_occurred.emit(f"Mic error: {err[:60]}")
             self.is_recording = False
-            self.status_changed.emit("error")
+            self._reset()
             return
-
-        # Recording finished, now process
+        # Recording done, now transcribe
         threading.Thread(target=self._process, daemon=True).start()
 
     def _process(self):
+        self._processing = True
         try:
             audio_path = self._recorder.stop()
             if not audio_path:
-                self.status_changed.emit("idle")
+                log.info("No audio captured")
+                self._reset()
                 return
 
             log.info("Processing audio...")
@@ -112,23 +108,38 @@ class ClawVoice(QObject):
                 pass
 
             if result:
-                # Set injection guard BEFORE emitting signal
+                log.info(f"Transcribed: {len(result.split())} words")
                 self._injecting = True
                 try:
                     self.transcription_ready.emit(result)
-                finally:
-                    # Clear guard after a delay to let paste complete
-                    threading.Timer(0.8, self._clear_inject_guard).start()
-                self.status_changed.emit("idle")
+                except Exception as e:
+                    log.error(f"Emit failed: {e}")
+                # Clear inject guard after delay
+                threading.Timer(1.0, self._clear_inject_guard).start()
             elif error:
+                log.error(error)
                 self.error_occurred.emit(error)
-                self.status_changed.emit("error")
             else:
-                self.status_changed.emit("idle")
+                log.info("Silence detected")
 
         except Exception as e:
-            self.error_occurred.emit(f"Processing error: {e}")
-            self.status_changed.emit("error")
+            log.error(f"Processing error: {e}")
+            try:
+                self.error_occurred.emit(f"Error: {str(e)[:60]}")
+            except Exception:
+                pass
+        finally:
+            self._reset()
+
+    def _reset(self):
+        """Re-arm for next recording."""
+        self.is_recording = False
+        self._processing = False
+        self._hotkey_held = False
+        try:
+            self.status_changed.emit("idle")
+        except Exception:
+            pass
 
     def _clear_inject_guard(self):
         self._injecting = False

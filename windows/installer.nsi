@@ -1,14 +1,14 @@
 !define APP_NAME "ClawVoice"
-!define APP_VERSION "0.4.2"
+!define APP_VERSION "0.4.3"
 !define APP_EXE "ClawVoice.exe"
 
 ; Version information for Windows Explorer and SmartScreen trust signals
-VIProductVersion "0.4.2.0"
+VIProductVersion "0.4.3.0"
 VIAddVersionKey "ProductName" "ClawVoice"
 VIAddVersionKey "CompanyName" "Birbus Team"
 VIAddVersionKey "FileDescription" "ClawVoice - Voice Dictation for Windows"
-VIAddVersionKey "FileVersion" "0.4.2"
-VIAddVersionKey "ProductVersion" "0.4.2"
+VIAddVersionKey "FileVersion" "0.4.3"
+VIAddVersionKey "ProductVersion" "0.4.3"
 VIAddVersionKey "LegalCopyright" "MIT License"
 
 Name "${APP_NAME} ${APP_VERSION}"
