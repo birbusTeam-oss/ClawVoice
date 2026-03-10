@@ -59,3 +59,22 @@ PRs welcome. See [CONTRIBUTING.md](CONTRIBUTING.md).
 ## License
 
 MIT — see [LICENSE](LICENSE)
+
+## Troubleshooting
+
+### "Smart App Control blocked this app" (Windows 11)
+
+ClawVoice is an open source app without a paid code signing certificate yet. We're working on getting it signed via [SignPath.io](https://signpath.io) (see [docs/CODE_SIGNING.md](docs/CODE_SIGNING.md)).
+
+**Option A — Override for this file (easiest):**
+1. Right-click `ClawVoice-Setup.exe` → Properties
+2. At the bottom, check **Unblock** → Apply
+3. Run the installer
+
+**Option B — Temporarily disable Smart App Control:**
+1. Go to Settings → Privacy & Security → Windows Security
+2. App & browser control → Smart App Control
+3. Select **Off** (requires restart)
+4. Install ClawVoice, then re-enable if you want
+
+Once we complete the SignPath open source signing setup, this won't be needed.
