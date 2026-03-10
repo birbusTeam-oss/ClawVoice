@@ -11,13 +11,11 @@ from overlay import RecordingOverlay
 from config import Config
 from injector import inject
 
-# Set up logging so transcriber/main can log
 logging.basicConfig(level=logging.INFO, format="%(message)s")
 log = logging.getLogger("clawvoice")
 
 
 class SettingsLogHandler(logging.Handler):
-    """Routes log messages to the settings window log panel."""
     def __init__(self, settings):
         super().__init__()
         self.settings = settings
@@ -36,10 +34,10 @@ def main():
     app.setApplicationName("ClawVoice")
 
     config = Config()
-    settings = SettingsWindow(config)
+    first_run = not config.get("setup_complete", False)
+    settings = SettingsWindow(config, first_run=first_run)
     overlay = RecordingOverlay()
 
-    # Route all clawvoice logs to the settings panel
     log.addHandler(SettingsLogHandler(settings))
 
     try:
@@ -58,7 +56,6 @@ def main():
         elif status == "transcribing":
             overlay.show_transcribing()
         elif status in ("idle", "error"):
-            # Always hide overlay when we return to idle or error
             overlay.hide_overlay()
 
     def on_transcription(text: str):
@@ -69,18 +66,24 @@ def main():
         overlay.show_error(message)
         log.error(message)
 
+    def on_started():
+        tray.tray.showMessage("ClawVoice", "Ready — Hold Ctrl+Alt to dictate.", msecs=3000)
+        log.info("ClawVoice ready — hold Ctrl+Alt to dictate")
+
     clawvoice.status_changed.connect(on_status)
     clawvoice.transcription_ready.connect(inject)
     clawvoice.transcription_ready.connect(on_transcription)
     clawvoice.error_occurred.connect(on_error)
+    settings.started.connect(on_started)
 
     app.aboutToQuit.connect(clawvoice.shutdown)
 
-    log.info("ClawVoice started — hold Ctrl+Alt to dictate")
-
-    if config.is_first_run():
+    if first_run:
         settings.show()
+        settings.raise_()
+        settings.activateWindow()
     else:
+        log.info("ClawVoice started — hold Ctrl+Alt to dictate")
         tray.tray.showMessage("ClawVoice", "Ready — Hold Ctrl+Alt to dictate.", msecs=3000)
 
     sys.exit(app.exec())
