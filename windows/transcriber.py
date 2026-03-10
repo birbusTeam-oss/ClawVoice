@@ -4,61 +4,44 @@ import os
 class Transcriber:
     def __init__(self, config):
         self.config = config
-        self._model = None
-        self._model_type = None  # "faster_whisper" or "openai_whisper"
+        self._recognizer = None
 
-    def _get_model(self):
-        if self._model is not None:
-            return self._model, None
-
-        try:
-            from faster_whisper import WhisperModel
-            # base model: ~150MB, good accuracy, runs fast on CPU
-            self._model = WhisperModel("base", device="cpu", compute_type="int8")
-            self._model_type = "faster_whisper"
-            return self._model, None
-        except ImportError:
-            pass
-
-        try:
-            import whisper
-            self._model = whisper.load_model("base")
-            self._model_type = "openai_whisper"
-            return self._model, None
-        except ImportError:
-            pass
-
-        return None, "Whisper not installed — run: pip install faster-whisper"
+    def _get_recognizer(self):
+        if self._recognizer is None:
+            import speech_recognition as sr
+            self._recognizer = sr.Recognizer()
+        return self._recognizer
 
     def transcribe(self, audio_path: str) -> tuple[str | None, str | None]:
-        """Returns (text, error_message). One of them will be None."""
+        """Returns (text, error_message). One will be None."""
         if not os.path.exists(audio_path):
             return None, "Audio file not found"
 
         try:
             file_size = os.path.getsize(audio_path)
-
-            # Skip near-silence (< 1KB)
             if file_size < 1024:
-                return None, None  # silence, not an error
+                return None, None  # silence
 
-            model, err = self._get_model()
-            if err:
-                return None, err
+            import speech_recognition as sr
+            recognizer = self._get_recognizer()
 
-            if self._model_type == "faster_whisper":
-                segments, _info = model.transcribe(audio_path, beam_size=5, language="en")
-                text = " ".join(seg.text.strip() for seg in segments).strip()
-            else:
-                # openai-whisper fallback
-                import whisper
-                result = model.transcribe(audio_path, language="en")
-                text = result["text"].strip()
+            with sr.AudioFile(audio_path) as source:
+                audio = recognizer.record(source)
 
-            if not text or text.lower() in ('[blank_audio]', '[silence]', ''):
-                return None, None  # silence, not an error
+            try:
+                text = recognizer.recognize_google(audio)
+            except sr.UnknownValueError:
+                return None, None  # silence / unintelligible
+            except sr.RequestError as e:
+                return None, f"Speech API unavailable: {e}"
+
+            text = text.strip()
+            if not text:
+                return None, None
 
             return text, None
 
+        except ImportError:
+            return None, "SpeechRecognition not installed"
         except Exception as e:
-            return None, f"Transcription error: {str(e)[:80]}"
+            return None, f"Transcription error: {str(e)[:100]}"

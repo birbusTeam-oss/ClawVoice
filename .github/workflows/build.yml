@@ -30,12 +30,12 @@ jobs:
       - name: Install Python dependencies
         run: |
           cd windows
-          pip install pyinstaller PyQt6 keyboard pyaudio requests pynput pyperclip anthropic pystray Pillow pywin32 faster-whisper
+          pip install pyinstaller PyQt6 keyboard pyaudio requests pynput pyperclip pystray Pillow pywin32 SpeechRecognition
 
       - name: Build exe
         run: |
           cd windows
-          pyinstaller --onefile --windowed --name ClawVoice --icon=assets/icon.ico --add-data "assets;assets" --collect-all faster_whisper --version-file=version_info.txt run.py
+          pyinstaller --onefile --windowed --name ClawVoice --icon=assets/icon.ico --add-data "assets;assets" --version-file=version_info.txt run.py
 
       - name: Install NSIS
         run: choco install nsis -y --no-progress
@@ -80,30 +80,31 @@ jobs:
       - name: Publish release
         uses: softprops/action-gh-release@v1
         with:
-          tag_name: v0.3.1
-          name: ClawVoice v0.3.1
+          tag_name: v0.4.0
+          name: ClawVoice v0.4.0
           make_latest: true
           body: |
-            ## ClawVoice v0.3.1
+            ## ClawVoice v0.4.0
 
             Voice dictation for Windows. Hold Ctrl+Alt, speak, release — text appears in any app.
 
             ### What's new
-            - Local Whisper transcription — works offline, no API key needed
-            - Hotkey changed to Ctrl+Alt (fewer conflicts)
-            - Settings redesigned — clean dashboard with API, Profile, and Logs sections
-            - Overlay shows word count after dictation
-            - Tray tooltip shows live status
+            - Completely rebuilt transcription engine — reliable, no crashes
+            - No API key needed — works out of the box
+            - Fixed hotkey release detection
+            - Fixed text injection (no more crashes on paste)
+            - Clean settings dashboard — just Profile and Logs
 
             ### Install
-            1. Download `ClawVoice-Setup.exe` below
-            2. If Windows blocks it: right-click → Properties → check Unblock → Apply
+            1. Download ClawVoice-Setup.exe below
+            2. If Windows blocks it: right-click → Properties → Unblock → Apply
             3. Run the installer
-            4. Hold Ctrl+Alt to record, release to transcribe
+            4. Hold Ctrl+Alt to dictate, release to inject text
 
             ### Requirements
             - Windows 10 or 11
             - A microphone
+            - Internet connection (for speech recognition)
           files: ClawVoice-Setup.exe
           fail_on_unmatched_files: false
         env:

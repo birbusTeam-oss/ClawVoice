@@ -18,7 +18,7 @@ jobs:
       - name: Install and syntax check
         run: |
           cd windows
-          pip install PyQt6 keyboard pyaudio requests pynput pyperclip anthropic pystray Pillow faster-whisper
+          pip install PyQt6 keyboard pyaudio requests pynput pyperclip pystray Pillow SpeechRecognition
           python -c "import ast; import os; [ast.parse(open(f).read()) for f in os.listdir('.') if f.endswith('.py')]; print('All Python files OK')"
 
   test-android-build:
