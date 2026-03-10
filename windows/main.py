@@ -3,7 +3,10 @@ ClawVoice for Windows — Hold Ctrl+Alt to dictate.
 """
 import threading
 import os
+import logging
 from PyQt6.QtCore import QObject, pyqtSignal
+
+log = logging.getLogger("clawvoice")
 
 
 class ClawVoice(QObject):
@@ -62,6 +65,7 @@ class ClawVoice(QObject):
     def _on_press(self):
         if not self.is_recording and self._recorder:
             self.is_recording = True
+            log.info("Recording started...")
             self.status_changed.emit("recording")
             threading.Thread(target=self._record, daemon=True).start()
 
@@ -69,6 +73,7 @@ class ClawVoice(QObject):
         if self.is_recording and self._recorder:
             self.is_recording = False
             self._recorder.recording = False
+            log.info("Recording stopped, transcribing...")
             self.status_changed.emit("transcribing")
 
     def _record(self):
@@ -96,6 +101,7 @@ class ClawVoice(QObject):
                 self.status_changed.emit("idle")
                 return
 
+            log.info("Processing audio...")
             from transcriber import Transcriber
             transcriber = Transcriber(self.config)
             result, error = transcriber.transcribe(audio_path)
