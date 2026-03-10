@@ -46,9 +46,11 @@ def main():
         # Show success feedback: word count
         word_count = len(text.split())
         overlay.show_success(word_count)
+        settings.append_log(f"Transcribed {word_count} words", level="info")
 
     def on_error(message: str):
         overlay.show_error(message)
+        settings.append_log(f"Error: {message}", level="error")
 
     clawvoice.status_changed.connect(on_status)
     clawvoice.transcription_ready.connect(on_transcription)
@@ -56,6 +58,8 @@ def main():
 
     # inject is connected in TrayManager already
     app.aboutToQuit.connect(clawvoice.shutdown)
+
+    settings.append_log("ClawVoice started — ready to dictate")
 
     if not config.anthropic_key:
         # First run — show settings, prevent closing until key is saved

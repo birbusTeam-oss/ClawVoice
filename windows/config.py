@@ -47,3 +47,16 @@ class Config:
 
     def is_valid_key(self, key: str) -> bool:
         return bool(self.KEY_PATTERN.match(key.strip()))
+
+    def get_api_key(self) -> str:
+        return self.anthropic_key
+
+    def set_api_key(self, key: str):
+        self.anthropic_key = key
+
+    def get(self, key, default=None):
+        return self._data.get(key, default)
+
+    def set(self, key, value):
+        self._data[key] = value
+        self._save()
