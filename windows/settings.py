@@ -103,7 +103,7 @@ class SettingsWindow(QWidget):
         outer.addWidget(sub)
 
         # API Section
-        outer.addWidget(self._section_label("API Key"))
+        outer.addWidget(self._section_label("Anthropic API Key (optional)"))
         outer.addSpacing(8)
 
         current_key = self.config.get_api_key() or ""
@@ -116,6 +116,9 @@ class SettingsWindow(QWidget):
 
         self.api_input = QLineEdit()
         self.api_input.setPlaceholderText("Paste new Anthropic API key...")
+        whisper_note = QLabel("Voice transcription runs locally — no API key needed")
+        whisper_note.setStyleSheet("font-size: 11px; color: rgba(255,255,255,0.3); margin-top: 4px; margin-bottom: 4px;")
+        outer.addWidget(whisper_note)
         self.api_input.setEchoMode(QLineEdit.EchoMode.Password)
         outer.addWidget(self.api_input)
         outer.addSpacing(8)
@@ -162,8 +165,8 @@ class SettingsWindow(QWidget):
 
         self.log_view = QTextEdit()
         self.log_view.setReadOnly(True)
-        self.log_view.setMinimumHeight(140)
-        self.log_view.setMaximumHeight(200)
+        self.log_view.setMinimumHeight(180)
+        self.log_view.setMaximumHeight(999)
         self.log_view.setPlaceholderText("Transcription events and errors appear here...")
         outer.addWidget(self.log_view)
 
@@ -223,7 +226,7 @@ class SettingsWindow(QWidget):
         timestamp = QDateTime.currentDateTime().toString("hh:mm:ss")
         color = {"error": "#ef4444", "warn": "#F59E0B", "info": "rgba(255,255,255,0.45)"}.get(level, "rgba(255,255,255,0.45)")
         self._log_lines.append(f'<span style="color:rgba(255,255,255,0.25)">[{timestamp}]</span> <span style="color:{color}">{message}</span>')
-        self.log_view.setHtml("<br>".join(self._log_lines[-50:]))
+        self.log_view.setHtml("<br>".join(self._log_lines))
         self.log_view.verticalScrollBar().setValue(self.log_view.verticalScrollBar().maximum())
 
     def set_required(self, required):

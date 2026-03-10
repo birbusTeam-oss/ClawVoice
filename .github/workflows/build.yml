@@ -30,12 +30,12 @@ jobs:
       - name: Install Python dependencies
         run: |
           cd windows
-          pip install pyinstaller PyQt6 keyboard pyaudio requests pynput pyperclip anthropic pystray Pillow pywin32
+          pip install pyinstaller PyQt6 keyboard pyaudio requests pynput pyperclip anthropic pystray Pillow pywin32 faster-whisper
 
       - name: Build exe
         run: |
           cd windows
-          pyinstaller --onefile --windowed --name ClawVoice --icon=assets/icon.ico --add-data "assets;assets" --version-file=version_info.txt run.py
+          pyinstaller --onefile --windowed --name ClawVoice --icon=assets/icon.ico --add-data "assets;assets" --collect-all faster_whisper --version-file=version_info.txt run.py
 
       - name: Install NSIS
         run: choco install nsis -y --no-progress
