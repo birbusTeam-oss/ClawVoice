@@ -64,24 +64,9 @@ jobs:
           name: ClawVoice-Setup
           path: windows/ClawVoice-Setup.exe
           retention-days: 30
-      - name: Sign installer (SignPath)
-        if: ${{ secrets.SIGNPATH_API_TOKEN != '' }}
-        uses: signpath/github-action-submit-signing-request@v1
-        with:
-          api-token: '${{ secrets.SIGNPATH_API_TOKEN }}'
-          organization-id: '${{ secrets.SIGNPATH_ORG_ID }}'
-          project-slug: 'ClawVoice'
-          signing-policy-slug: 'release-signing'
-          artifact-configuration-slug: 'installer'
-          github-artifact-name: 'ClawVoice-Setup'
-          wait-for-completion: true
-          output-artifact-directory: 'windows/'
-        env:
-          SIGNPATH_API_TOKEN: ${{ secrets.SIGNPATH_API_TOKEN }}
-
 
   update-release:
-    name: Publish v0.2.1 Release
+    name: Publish Release
     needs: build-windows
     runs-on: ubuntu-latest
     if: needs.build-windows.result == 'success'
@@ -101,22 +86,24 @@ jobs:
           body: |
             ## ClawVoice v0.2.1
 
-            ### What's new
-            - Overlay shows error messages when transcription fails (auto-hides after 3.5s)
-            - Overlay shows word count after successful dictation
-            - Tray tooltip shows live status: Ready / Recording... / Transcribing...
-            - Fixed: recording now correctly stops when Ctrl+Space is released
-            - Better error messages: API auth, rate limits, mic permission denied, network timeout
-            - Edge case hardening: no mic detected, invalid API key format, clipboard preservation
+            Voice dictation for Windows. Hold Ctrl+Alt, speak, release — text appears in any app.
 
-            ### Download & Install
+            ### What's new
+            - Local Whisper transcription — works offline, no API key needed
+            - Hotkey changed to Ctrl+Alt (fewer conflicts)
+            - Settings redesigned — clean dashboard with API, Profile, and Logs sections
+            - Overlay shows word count after dictation
+            - Tray tooltip shows live status
+
+            ### Install
             1. Download `ClawVoice-Setup.exe` below
-            2. Run the installer — it will ask for your Anthropic API key on first launch
-            3. Hold `Ctrl+Space` to record, release to transcribe
+            2. If Windows blocks it: right-click → Properties → check Unblock → Apply
+            3. Run the installer
+            4. Hold Ctrl+Alt to record, release to transcribe
 
             ### Requirements
             - Windows 10 or 11
-            - Your own [Anthropic API key](https://console.anthropic.com/)
+            - A microphone
           files: ClawVoice-Setup.exe
           fail_on_unmatched_files: false
         env:
@@ -134,22 +121,8 @@ jobs:
           SHA="${{ github.sha }}"
           SHA_SHORT="${SHA:0:7}"
           REF="${{ github.ref_name }}"
-          ACTOR="${{ github.actor }}"
           COMMIT_MSG=$(echo "${{ github.event.head_commit.message }}" | head -1 | sed 's/"/\\"/g')
-
-          if [ "$STATUS" = "success" ]; then
-            ICON="✅"
-            LOG_STATUS="done"
-          else
-            ICON="❌"
-            LOG_STATUS="error"
-          fi
-
+          if [ "$STATUS" = "success" ]; then ICON="✅"; LOG_STATUS="done"; else ICON="❌"; LOG_STATUS="error"; fi
           curl -s -X POST ${{ secrets.HUB_URL }}/api/log/task \
             -H "Content-Type: application/json" \
-            -d "{
-              \"agent\": \"github\",
-              \"task_type\": \"ci_build\",
-              \"task_summary\": \"$ICON [ClawVoice] Build $STATUS on $REF ($SHA_SHORT) — \\\"$COMMIT_MSG\\\" by $ACTOR\",
-              \"status\": \"$LOG_STATUS\"
-            }" || echo "Hub log skipped"
+            -d "{\"agent\":\"github\",\"task_type\":\"ci_build\",\"task_summary\":\"$ICON [ClawVoice] Build $STATUS on $REF ($SHA_SHORT) — \\\"$COMMIT_MSG\\\"\",\"status\":\"$LOG_STATUS\"}" || echo "Hub log skipped"
