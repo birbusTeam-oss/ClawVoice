@@ -8,6 +8,7 @@ from tray import TrayManager
 from settings import SettingsWindow
 from overlay import RecordingOverlay
 from config import Config
+from injector import inject
 
 
 def main():
@@ -34,33 +35,30 @@ def main():
             overlay.show_recording()
         elif status == "transcribing":
             overlay.show_transcribing()
-        elif status == "idle":
-            # hide_overlay only if we didn't just show success/error
-            # (success/error handle their own auto-hide timers)
-            pass
-        elif status == "error":
-            # overlay error is handled via error_occurred signal with message
-            pass
 
     def on_transcription(text: str):
-        # Show success feedback: word count
         word_count = len(text.split())
         overlay.show_success(word_count)
-        settings.append_log(f"Transcribed {word_count} words", level="info")
+        settings.append_log(f"Transcribed {word_count} words")
 
     def on_error(message: str):
         overlay.show_error(message)
         settings.append_log(f"Error: {message}", level="error")
 
     clawvoice.status_changed.connect(on_status)
+    clawvoice.transcription_ready.connect(inject)
     clawvoice.transcription_ready.connect(on_transcription)
     clawvoice.error_occurred.connect(on_error)
 
-    # inject is connected in TrayManager already
     app.aboutToQuit.connect(clawvoice.shutdown)
 
-    settings.append_log("ClawVoice started — ready to dictate")
-    tray.tray.showMessage("ClawVoice", "Ready! Hold Ctrl+Alt to dictate.", msecs=3000)
+    settings.append_log("ClawVoice started — hold Ctrl+Alt to dictate")
+
+    # Always show settings on first launch so user knows it's running
+    if config.is_first_run():
+        settings.show()
+    else:
+        tray.tray.showMessage("ClawVoice", "Ready — Hold Ctrl+Alt to dictate.", msecs=3000)
 
     sys.exit(app.exec())
 

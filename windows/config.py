@@ -60,3 +60,7 @@ class Config:
     def set(self, key, value):
         self._data[key] = value
         self._save()
+
+    def is_first_run(self) -> bool:
+        """True if config file didn't exist before this session."""
+        return not self.CONFIG_FILE.exists() or not self._data
