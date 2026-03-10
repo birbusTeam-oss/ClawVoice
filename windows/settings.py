@@ -15,7 +15,7 @@ class SettingsWindow(QWidget):
         self._required = False  # Set True on first run — blocks closing
 
         self.setWindowTitle("ClawVoice Settings")
-        self.setFixedSize(500, 460)
+        self.setMinimumSize(420, 520)
         self.setWindowFlags(Qt.WindowType.Window)
         self.setup_ui()
         self.apply_styles()
@@ -50,8 +50,8 @@ class SettingsWindow(QWidget):
 
     def setup_ui(self):
         layout = QVBoxLayout(self)
-        layout.setContentsMargins(36, 32, 36, 32)
-        layout.setSpacing(0)
+        layout.setContentsMargins(24, 24, 24, 24)
+        layout.setSpacing(16)
 
         # First-run banner (hidden unless required)
         self.setup_banner = QFrame()
@@ -160,7 +160,7 @@ class SettingsWindow(QWidget):
         card_layout.addWidget(kb)
         text_col = QVBoxLayout()
         text_col.setSpacing(4)
-        h1 = QLabel("Hold Ctrl+Space to dictate")
+        h1 = QLabel("Hold Ctrl+Alt to dictate")
         h1.setObjectName("hotkeyTitle")
         h2 = QLabel("Release to transcribe and type into any app")
         h2.setObjectName("hotkeyDesc")
@@ -172,7 +172,7 @@ class SettingsWindow(QWidget):
 
         self.save_btn = QPushButton("Save & Start")
         self.save_btn.setObjectName("saveBtn")
-        self.save_btn.setFixedHeight(50)
+        self.save_btn.setFixedHeight(44)
         self.save_btn.clicked.connect(self.save)
         self.save_btn.setVisible(False)
         layout.addWidget(self.save_btn)
@@ -229,8 +229,8 @@ class SettingsWindow(QWidget):
             #hotkeyIcon { font-size: 20px; }
             #hotkeyTitle { font-size: 14px; font-weight: 600; color: #ffffff; font-family: 'Segoe UI', sans-serif; }
             #hotkeyDesc { font-size: 12px; color: #6b6b8a; font-family: 'Segoe UI', sans-serif; }
-            #saveBtn { background: qlineargradient(x1:0,y1:0,x2:1,y2:0,stop:0 #6B5ECD,stop:1 #8B7FED); border: none; border-radius: 12px; color: #ffffff; font-size: 15px; font-weight: 600; font-family: 'Segoe UI', sans-serif; }
-            #saveBtn:hover { background: qlineargradient(x1:0,y1:0,x2:1,y2:0,stop:0 #7B6EDD,stop:1 #9B8FFD); }
+            #saveBtn { background: #4CAF70; border: none; border-radius: 12px; color: #1a1a28; font-size: 15px; font-weight: 700; font-family: 'Segoe UI', sans-serif; }
+            #saveBtn:hover { background: #5DBF80; }
             #version { font-size: 11px; color: #3a3a5a; font-family: 'Segoe UI', sans-serif; }
         """)
 

@@ -1,5 +1,5 @@
 """
-ClawVoice for Windows — Hold Ctrl+Space to dictate.
+ClawVoice for Windows — Hold Ctrl+Alt to dictate.
 """
 import threading
 import os
@@ -37,14 +37,14 @@ class ClawVoice(QObject):
             if "admin" in msg.lower() or "permission" in msg.lower() or "access" in msg.lower():
                 self.error_occurred.emit("Hotkey needs Administrator — right-click → Run as Admin")
             elif "conflict" in msg.lower():
-                self.error_occurred.emit("Ctrl+Space hotkey conflict — try running as Admin")
+                self.error_occurred.emit("Ctrl+Alt hotkey conflict — try running as Admin")
             else:
                 self.error_occurred.emit(f"Hotkey setup failed: {msg}")
             self.status_changed.emit("error")
 
     def _key_handler(self, event):
         import keyboard as kb
-        if event.name == 'space' and kb.is_pressed('ctrl'):
+        if event.name == 'alt' and kb.is_pressed('ctrl'):
             if event.event_type == 'down' and not self._hotkey_held:
                 self._hotkey_held = True
                 self._on_press()

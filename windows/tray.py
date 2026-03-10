@@ -56,7 +56,7 @@ class TrayManager:
         self.tray.setIcon(icon)
         tooltips = {
             "idle":         "ClawVoice — Ready",
-            "recording":    "ClawVoice — Recording... release Ctrl+Space to stop",
+            "recording":    "ClawVoice — Recording... release Ctrl+Alt to stop",
             "transcribing": "ClawVoice — Transcribing...",
             "error":        "ClawVoice — Error (see overlay for details)",
         }

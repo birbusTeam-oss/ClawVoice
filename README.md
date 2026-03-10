@@ -1,93 +1,61 @@
-# ClawVoice 🎙️
+# ClawVoice
 
-> Open source voice dictation for any app — powered by Claude AI.
+Voice dictation for Windows. Hold a hotkey, speak, release — text appears wherever your cursor is.
 
-**Hold Ctrl+Space. Speak. Text appears wherever you're typing.**
-
-No subscription. No backend. No data collection. Just your API key and your voice.
+Built by the Birbus Team. Open source, MIT license. Zero servers. Your API key stays on your device.
 
 ---
 
-## Download
+## Download & Install
 
-| Platform | File | Requirements |
-|----------|------|--------------|
-| **Windows** | [⬇️ ClawVoice-Setup.exe](https://github.com/birbusTeam-oss/ClawVoice/releases/latest) | Windows 10/11 |
+1. Go to [Releases](https://github.com/birbusTeam-oss/ClawVoice/releases/latest)
+2. Download **ClawVoice-Setup.exe**
+3. Run the installer
+4. On first launch, enter your [Anthropic API key](https://console.anthropic.com/) — it's stored locally, never sent anywhere
+5. ClawVoice starts in your system tray
 
-> macOS support coming soon.
+## How to use
 
----
+- **Hold Ctrl+Alt** to start recording
+- **Speak**
+- **Release Ctrl+Alt** — your words are transcribed and typed into the active window
 
-## How it works
-
-```
-Hold Ctrl+Space → speak → release → text appears in any app
-```
-
-A floating indicator appears while you're recording so you always know it's listening. Works in Gmail, Chrome, Word, Slack, Notion, anything with a text field.
-
----
-
-## Setup
-
-### Step 1 — Get your API key
-Get a free Anthropic API key at [console.anthropic.com](https://console.anthropic.com)
-
-That's the only key you need. ClawVoice uses Claude for everything.
-
----
-
-### Windows
-
-1. Download [ClawVoice.exe](https://github.com/birbusTeam-oss/ClawVoice/releases/latest)
-2. Double-click `ClawVoice.exe` — no installation, no Python required
-3. Windows may show a security prompt — click **More info → Run anyway**
-4. ClawVoice appears in your system tray (bottom right)
-5. Right-click the tray icon → **Settings**
-6. Paste your Anthropic API key → **Save**
-7. Hold **Ctrl+Space** anywhere to dictate — a floating bar appears while recording
-8. Release **Ctrl+Space** to stop — text is typed automatically
+Works in any app: browsers, editors, chat, email, anywhere.
 
 > 🟣 Tray icon: **purple** = idle · **red** = recording · **yellow** = transcribing
 
----
+## Requirements
 
-## Features
-
-- 🎙️ **Works in any app** — Gmail, Chrome, Word, Slack, Notion, everything
-- 🤖 **Claude-powered** — transcription and cleanup in one call, no pipeline
-- 🪟 **Floating indicator** — always know when it's listening
-- ⌨️ **Ctrl+Space hotkey** — hold to talk, release to transcribe
-- 🔒 **Zero data collection** — audio goes directly to Anthropic's API
-- 🆓 **Free and open source** — MIT license, forever
-
----
+- Windows 10 or 11
+- A microphone
+- An [Anthropic API key](https://console.anthropic.com/) (you pay Anthropic directly — ~$0.001 per transcription)
 
 ## Privacy
 
-Your audio goes directly from your device to Anthropic's API. We have no servers. We store no data. Ever. Source code is public — verify it yourself.
-
----
+- No accounts, no servers, no telemetry
+- Your audio is sent directly to Anthropic's API and immediately discarded
+- Your API key is stored locally in `%APPDATA%\ClawVoice\config.json`
 
 ## Building from source
 
 ```bash
-git clone https://github.com/birbusTeam-oss/ClawVoice
 cd windows
 pip install -r requirements.txt
 python run.py
-
-# Build your own .exe
-pip install pyinstaller
-pyinstaller --onefile --windowed --name ClawVoice --icon=assets/icon.ico run.py
 ```
 
----
+To build the installer:
+
+```bash
+pip install pyinstaller
+pyinstaller --onefile --windowed --name ClawVoice --icon=assets/icon.ico run.py
+makensis installer.nsi
+```
 
 ## Contributing
 
 PRs welcome. See [CONTRIBUTING.md](CONTRIBUTING.md).
 
----
+## License
 
-*Built by the Birbus Team — open source forever.*
+MIT — see [LICENSE](LICENSE)

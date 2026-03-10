@@ -62,7 +62,7 @@ def main():
         settings.set_required(True)
         settings.show()
     else:
-        tray.tray.showMessage("ClawVoice", "Ready! Hold Ctrl+Space to dictate.", msecs=3000)
+        tray.tray.showMessage("ClawVoice", "Ready! Hold Ctrl+Alt to dictate.", msecs=3000)
 
     sys.exit(app.exec())
 
