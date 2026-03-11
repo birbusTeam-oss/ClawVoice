@@ -1,6 +1,5 @@
 """
 ClawVoice for Windows — Hold Ctrl+Alt to dictate.
-Crash-resilient: stays running no matter what.
 """
 import threading
 import os
@@ -22,9 +21,10 @@ class ClawVoice(QObject):
         self.is_recording = False
         self._hotkey_held = False
         self._injecting = False
-        self._processing = False  # prevent overlapping transcriptions
+        self._processing = False
         self._keyboard_hook = None
         self._recorder = None
+        self._transcriber = None  # reuse across calls
         self._setup_recorder()
         self._setup_hotkey()
 
@@ -48,7 +48,7 @@ class ClawVoice(QObject):
                 log.error(f"Hotkey setup failed: {msg}")
 
     def _key_handler(self, event):
-        if self._injecting:
+        if self._injecting or self._processing:
             return
         try:
             import keyboard as kb
@@ -79,14 +79,18 @@ class ClawVoice(QObject):
         try:
             self._recorder.start()
         except Exception as e:
-            err = str(e)
-            log.error(f"Mic error: {err}")
-            self.error_occurred.emit(f"Mic error: {err[:60]}")
-            self.is_recording = False
+            log.error(f"Mic error: {e}")
+            self.error_occurred.emit(f"Mic error: {str(e)[:60]}")
             self._reset()
             return
-        # Recording done, now transcribe
         threading.Thread(target=self._process, daemon=True).start()
+
+    def _get_transcriber(self):
+        """Reuse transcriber instance across calls."""
+        if self._transcriber is None:
+            from transcriber import Transcriber
+            self._transcriber = Transcriber(self.config)
+        return self._transcriber
 
     def _process(self):
         self._processing = True
@@ -98,9 +102,14 @@ class ClawVoice(QObject):
                 return
 
             log.info("Processing audio...")
-            from transcriber import Transcriber
-            transcriber = Transcriber(self.config)
+            transcriber = self._get_transcriber()
+
+            # Try transcription — retry once on failure
             result, error = transcriber.transcribe(audio_path)
+            if error and "API" not in error:
+                log.info("Retrying transcription...")
+                time.sleep(0.3)
+                result, error = transcriber.transcribe(audio_path)
 
             try:
                 os.remove(audio_path)
@@ -114,7 +123,6 @@ class ClawVoice(QObject):
                     self.transcription_ready.emit(result)
                 except Exception as e:
                     log.error(f"Emit failed: {e}")
-                # Clear inject guard after delay
                 threading.Timer(1.0, self._clear_inject_guard).start()
             elif error:
                 log.error(error)
