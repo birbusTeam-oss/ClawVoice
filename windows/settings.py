@@ -1,13 +1,13 @@
 import sys
 from PyQt6.QtWidgets import (
-    QWidget, QVBoxLayout, QLabel, QLineEdit,
-    QPushButton, QTextEdit, QFrame
+    QWidget, QVBoxLayout, QHBoxLayout, QLabel,
+    QPushButton, QTextEdit, QFrame, QCheckBox
 )
 from PyQt6.QtCore import Qt, QDateTime, pyqtSignal
 
 
 class SettingsWindow(QWidget):
-    started = pyqtSignal()  # emitted when user clicks Get Started
+    started = pyqtSignal()
 
     def __init__(self, config, first_run=False, parent=None):
         super().__init__(parent)
@@ -18,11 +18,10 @@ class SettingsWindow(QWidget):
 
     def _init_ui(self):
         self.setWindowTitle("ClawVoice")
-        self.setMinimumSize(440, 480)
+        self.setMinimumSize(440, 460)
         self.setMaximumWidth(540)
         self.setAttribute(Qt.WidgetAttribute.WA_DeleteOnClose, False)
 
-        # On first run, prevent closing — user must click Get Started
         if self._first_run:
             self.setWindowFlags(
                 Qt.WindowType.Window |
@@ -36,16 +35,6 @@ class SettingsWindow(QWidget):
                 color: #e8e8e8;
                 font-family: 'Segoe UI', sans-serif;
             }
-            QLineEdit {
-                background: #1a1a1a;
-                border: 1px solid rgba(255,255,255,0.1);
-                border-radius: 6px;
-                padding: 10px 12px;
-                font-size: 13px;
-                color: #e8e8e8;
-                min-height: 20px;
-            }
-            QLineEdit:focus { border-color: #4CAF70; }
             QPushButton#primaryBtn {
                 background: #4CAF70;
                 color: #000;
@@ -58,16 +47,22 @@ class SettingsWindow(QWidget):
             }
             QPushButton#primaryBtn:hover { background: #5ac47e; }
             QPushButton#primaryBtn:pressed { background: #3d9e5f; }
-            QPushButton#secondaryBtn {
-                background: rgba(255,255,255,0.06);
-                color: rgba(255,255,255,0.7);
-                border: 1px solid rgba(255,255,255,0.1);
-                border-radius: 6px;
-                padding: 8px 14px;
-                font-size: 12px;
-                max-width: 110px;
+            QCheckBox {
+                font-size: 13px;
+                color: #e8e8e8;
+                spacing: 8px;
             }
-            QPushButton#secondaryBtn:hover { background: rgba(255,255,255,0.1); }
+            QCheckBox::indicator {
+                width: 16px;
+                height: 16px;
+                border: 1px solid rgba(255,255,255,0.2);
+                border-radius: 3px;
+                background: #1a1a1a;
+            }
+            QCheckBox::indicator:checked {
+                background: #4CAF70;
+                border-color: #4CAF70;
+            }
             QTextEdit {
                 background: #111;
                 border: 1px solid rgba(255,255,255,0.08);
@@ -95,7 +90,6 @@ class SettingsWindow(QWidget):
             self._build_dashboard()
 
     def _build_welcome(self):
-        """First-run onboarding screen."""
         layout = self._layout
 
         title = QLabel("ClawVoice")
@@ -108,7 +102,6 @@ class SettingsWindow(QWidget):
         layout.addWidget(sub)
         layout.addSpacing(32)
 
-        # How it works
         steps = [
             ("1.", "Hold  Ctrl + Alt  to start recording"),
             ("2.", "Speak naturally"),
@@ -128,7 +121,6 @@ class SettingsWindow(QWidget):
 
         layout.addSpacing(32)
 
-        # Get Started button
         btn = QPushButton("Get Started")
         btn.setObjectName("primaryBtn")
         btn.clicked.connect(self._on_get_started)
@@ -137,37 +129,32 @@ class SettingsWindow(QWidget):
         layout.addSpacing(16)
 
         hint = QLabel("ClawVoice will live in your system tray after setup.")
-        hint.setStyleSheet("font-size: 11px; color: rgba(255,255,255,0.25); text-align: center;")
+        hint.setStyleSheet("font-size: 11px; color: rgba(255,255,255,0.25);")
         hint.setAlignment(Qt.AlignmentFlag.AlignCenter)
         layout.addWidget(hint)
 
         layout.addStretch()
 
     def _on_get_started(self):
-        """User clicked Get Started — switch to dashboard view."""
         self._first_run = False
-        # Mark first run complete in config
         self.config.set("setup_complete", True)
-        # Allow closing now
         self.setWindowFlags(
             Qt.WindowType.Window |
             Qt.WindowType.WindowTitleHint |
             Qt.WindowType.WindowMinimizeButtonHint |
             Qt.WindowType.WindowCloseButtonHint
         )
-        # Clear and rebuild as dashboard
         self._clear_layout()
         self._build_dashboard()
-        self.show()  # re-show after flag change
+        self.show()
         self.started.emit()
-        # Auto-close after a brief moment so user sees the dashboard transition
         from PyQt6.QtCore import QTimer
         QTimer.singleShot(800, self.hide)
 
     def _build_dashboard(self):
-        """Normal dashboard — profile + logs."""
         layout = self._layout
 
+        # Header
         title = QLabel("ClawVoice")
         title.setStyleSheet("font-size: 18px; font-weight: 700; color: #fff;")
         layout.addWidget(title)
@@ -176,43 +163,77 @@ class SettingsWindow(QWidget):
         sub = QLabel("Hold Ctrl+Alt to dictate in any app")
         sub.setStyleSheet("font-size: 12px; color: rgba(255,255,255,0.35);")
         layout.addWidget(sub)
-        layout.addSpacing(28)
+        layout.addSpacing(24)
 
-        # Profile
-        layout.addWidget(self._section_label("Profile"))
-        layout.addSpacing(10)
+        # Settings section
+        layout.addWidget(self._section_label("Settings"))
+        layout.addSpacing(12)
 
-        self.name_input = QLineEdit()
-        self.name_input.setPlaceholderText("Display name (optional)")
-        saved_name = self.config.get("display_name", "")
-        self.name_input.setText(saved_name)
-        layout.addWidget(self.name_input)
+        # Start with Windows toggle
+        self.startup_check = QCheckBox("Start with Windows")
+        self.startup_check.setChecked(self.config.get("start_with_windows", False))
+        self.startup_check.toggled.connect(self._toggle_startup)
+        layout.addWidget(self.startup_check)
         layout.addSpacing(8)
 
-        name_btn = QPushButton("Save")
-        name_btn.setObjectName("secondaryBtn")
-        name_btn.clicked.connect(self._save_name)
-        layout.addWidget(name_btn)
+        # Log transcriptions toggle
+        self.log_transcriptions_check = QCheckBox("Log transcriptions (local only)")
+        self.log_transcriptions_check.setChecked(self.config.get("log_transcriptions", False))
+        self.log_transcriptions_check.toggled.connect(
+            lambda checked: self.config.set("log_transcriptions", checked)
+        )
+        layout.addWidget(self.log_transcriptions_check)
 
-        layout.addSpacing(24)
+        layout.addSpacing(20)
         layout.addWidget(self._divider())
-        layout.addSpacing(24)
+        layout.addSpacing(20)
 
-        # Logs
+        # Logs section
         layout.addWidget(self._section_label("Logs"))
-        layout.addSpacing(10)
+        layout.addSpacing(4)
+
+        log_hint = QLabel("Errors always logged. Transcriptions logged when enabled above.")
+        log_hint.setStyleSheet("font-size: 11px; color: rgba(255,255,255,0.2); margin-bottom: 8px;")
+        layout.addWidget(log_hint)
 
         self.log_view = QTextEdit()
         self.log_view.setReadOnly(True)
-        self.log_view.setMinimumHeight(200)
-        self.log_view.setPlaceholderText("Transcription events and errors appear here...")
+        self.log_view.setMinimumHeight(220)
+        self.log_view.setPlaceholderText("Errors and events appear here...")
         layout.addWidget(self.log_view)
 
-        # Replay any logs captured before dashboard was built
+        # Replay buffered logs
         if self._log_lines:
             self.log_view.setHtml("<br>".join(self._log_lines))
 
         layout.addStretch()
+
+    def _toggle_startup(self, checked):
+        self.config.set("start_with_windows", checked)
+        try:
+            import winreg
+            key = winreg.OpenKey(
+                winreg.HKEY_CURRENT_USER,
+                r"Software\Microsoft\Windows\CurrentVersion\Run",
+                0, winreg.KEY_SET_VALUE
+            )
+            if checked:
+                import sys, os
+                if getattr(sys, 'frozen', False):
+                    exe_path = sys.executable
+                else:
+                    exe_path = os.path.abspath(sys.argv[0])
+                winreg.SetValueEx(key, "ClawVoice", 0, winreg.REG_SZ, f'"{exe_path}"')
+                self.append_log("Start with Windows enabled")
+            else:
+                try:
+                    winreg.DeleteValue(key, "ClawVoice")
+                except FileNotFoundError:
+                    pass
+                self.append_log("Start with Windows disabled")
+            winreg.CloseKey(key)
+        except Exception as e:
+            self.append_log(f"Registry error: {e}", level="error")
 
     def _clear_layout(self):
         while self._layout.count():
@@ -222,7 +243,9 @@ class SettingsWindow(QWidget):
 
     def _section_label(self, text):
         label = QLabel(text.upper())
-        label.setStyleSheet("font-size: 10px; font-weight: 600; color: rgba(255,255,255,0.3); letter-spacing: 1px;")
+        label.setStyleSheet(
+            "font-size: 10px; font-weight: 600; color: rgba(255,255,255,0.3); letter-spacing: 1px;"
+        )
         return label
 
     def _divider(self):
@@ -231,16 +254,17 @@ class SettingsWindow(QWidget):
         f.setFrameShape(QFrame.Shape.HLine)
         return f
 
-    def _save_name(self):
-        name = self.name_input.text().strip()
-        self.config.set("display_name", name)
-        self.append_log(f"Name saved: {name or '(cleared)'}")
-
     def append_log(self, message, level="info"):
+        """Append a log entry. Errors always shown. Info shown if relevant."""
         timestamp = QDateTime.currentDateTime().toString("hh:mm:ss")
-        color = {"error": "#ef4444", "warn": "#F59E0B"}.get(level, "rgba(255,255,255,0.45)")
+        color_map = {
+            "error": "#ef4444",
+            "warn": "#F59E0B",
+            "info": "rgba(255,255,255,0.4)",
+        }
+        color = color_map.get(level, color_map["info"])
         self._log_lines.append(
-            f'<span style="color:rgba(255,255,255,0.25)">[{timestamp}]</span> '
+            f'<span style="color:rgba(255,255,255,0.2)">[{timestamp}]</span> '
             f'<span style="color:{color}">{message}</span>'
         )
         if hasattr(self, 'log_view'):
@@ -249,9 +273,12 @@ class SettingsWindow(QWidget):
                 self.log_view.verticalScrollBar().maximum()
             )
 
+    def should_log_transcriptions(self):
+        return self.config.get("log_transcriptions", False)
+
     def closeEvent(self, event):
         if self._first_run:
-            event.ignore()  # can't close during onboarding
+            event.ignore()
         else:
             self.hide()
             event.ignore()

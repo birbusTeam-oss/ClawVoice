@@ -127,6 +127,8 @@ def main():
         try:
             word_count = len(text.split())
             overlay.show_success(word_count)
+            if settings.should_log_transcriptions():
+                log.info(f"[{word_count} words] {text}")
         except Exception as e:
             log.error(f"Display: {e}")
 
