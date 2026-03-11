@@ -95,8 +95,8 @@ def main():
             log.error(f"Error handler: {e}")
 
     def on_started():
-        tray.tray.showMessage("ClawVoice", "Ready — Hold Ctrl+Alt to dictate.", msecs=3000)
-        log.info("ClawVoice ready — hold Ctrl+Alt to dictate")
+        tray.tray.showMessage("ClawVoice", "Running in background — Hold Ctrl+Alt to dictate anywhere.", msecs=5000)
+        log.info("ClawVoice running in background — hold Ctrl+Alt to dictate")
 
     clawvoice.status_changed.connect(on_status)
     clawvoice.transcription_ready.connect(safe_inject)

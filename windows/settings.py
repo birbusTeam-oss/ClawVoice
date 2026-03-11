@@ -160,6 +160,9 @@ class SettingsWindow(QWidget):
         self._build_dashboard()
         self.show()  # re-show after flag change
         self.started.emit()
+        # Auto-close after a brief moment so user sees the dashboard transition
+        from PyQt6.QtCore import QTimer
+        QTimer.singleShot(800, self.hide)
 
     def _build_dashboard(self):
         """Normal dashboard — profile + logs."""
