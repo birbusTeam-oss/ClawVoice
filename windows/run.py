@@ -22,6 +22,13 @@ from overlay import RecordingOverlay
 from config import Config
 
 logging.basicConfig(level=logging.INFO, format="%(message)s")
+
+# Pre-initialize pynput Controller to avoid first-use crash
+try:
+    from injector import _get_controller
+    _get_controller()
+except Exception:
+    pass
 log = logging.getLogger("clawvoice")
 
 

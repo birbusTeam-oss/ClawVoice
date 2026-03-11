@@ -16,7 +16,7 @@ class AudioRecorder:
         self.CHUNK = 1024
         self.FORMAT = pyaudio.paInt16
         self.CHANNELS = 1
-        self.RATE = 16000
+        self.RATE = 44100
 
     def _get_pa(self):
         if self._pa is None:
