@@ -8,12 +8,14 @@ from PyQt6.QtCore import Qt, QDateTime, pyqtSignal
 
 class SettingsWindow(QWidget):
     started = pyqtSignal()
+    _log_signal = pyqtSignal(str, str)  # message, level — thread-safe log bridge
 
     def __init__(self, config, first_run=False, parent=None):
         super().__init__(parent)
         self.config = config
         self._first_run = first_run
         self._log_lines = []
+        self._log_signal.connect(self._append_log_main_thread)
         self._init_ui()
 
     def _init_ui(self):
@@ -256,7 +258,11 @@ class SettingsWindow(QWidget):
         return f
 
     def append_log(self, message, level="info"):
-        """Append a log entry. Errors always shown. Info shown if relevant."""
+        """Thread-safe: emits signal so widget update happens on main thread."""
+        self._log_signal.emit(message, level)
+
+    def _append_log_main_thread(self, message, level):
+        """Runs on main thread only — safe to touch widgets."""
         timestamp = QDateTime.currentDateTime().toString("hh:mm:ss")
         color_map = {
             "error": "#ef4444",
