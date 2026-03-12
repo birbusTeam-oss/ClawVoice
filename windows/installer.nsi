@@ -2,7 +2,6 @@
 !define APP_VERSION "0.6.4"
 !define APP_EXE "ClawVoice.exe"
 
-; Version information for Windows Explorer and SmartScreen trust signals
 VIProductVersion "0.6.4.0"
 VIAddVersionKey "ProductName" "ClawVoice"
 VIAddVersionKey "CompanyName" "Birbus Team"
@@ -13,20 +12,21 @@ VIAddVersionKey "LegalCopyright" "MIT License"
 
 Name "${APP_NAME} ${APP_VERSION}"
 OutFile "ClawVoice-Setup.exe"
-InstallDir "$PROGRAMFILES64\${APP_NAME}"
-InstallDirRegKey HKLM "Software\${APP_NAME}" ""
-RequestExecutionLevel admin
+; Install to user's local app data — no admin required
+InstallDir "$LOCALAPPDATA\${APP_NAME}"
+RequestExecutionLevel user
 SetCompressor lzma
 
-; Modern UI
 !include "MUI2.nsh"
 !define MUI_ABORTWARNING
 !define MUI_ICON "assets\icon.ico"
 !define MUI_UNICON "assets\icon.ico"
 
+; Skip directory page — just install
 !insertmacro MUI_PAGE_WELCOME
-!insertmacro MUI_PAGE_DIRECTORY
 !insertmacro MUI_PAGE_INSTFILES
+!define MUI_FINISHPAGE_RUN "$INSTDIR\${APP_EXE}"
+!define MUI_FINISHPAGE_RUN_TEXT "Launch ClawVoice"
 !insertmacro MUI_PAGE_FINISH
 
 !insertmacro MUI_UNPAGE_CONFIRM
@@ -34,9 +34,14 @@ SetCompressor lzma
 
 !insertmacro MUI_LANGUAGE "English"
 
-Section "ClawVoice" SecMain
-    ; Wipe any existing config for fresh install
+Section "Install"
+    ; Kill any running instance first
+    nsExec::ExecToLog 'taskkill /F /IM ${APP_EXE}'
+
+    ; Wipe old config for fresh install
     RMDir /r "$APPDATA\ClawVoice"
+
+    ; Copy files
     SetOutPath "$INSTDIR"
     File "dist\${APP_EXE}"
 
@@ -51,23 +56,24 @@ Section "ClawVoice" SecMain
     ; Run on Windows startup
     WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Run" "${APP_NAME}" '"$INSTDIR\${APP_EXE}"'
 
-    ; Add/Remove Programs entry
+    ; Uninstaller
     WriteUninstaller "$INSTDIR\Uninstall.exe"
-    WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\${APP_NAME}" "DisplayName" "${APP_NAME}"
-    WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\${APP_NAME}" "UninstallString" '"$INSTDIR\Uninstall.exe"'
-    WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\${APP_NAME}" "DisplayVersion" "${APP_VERSION}"
-    WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\${APP_NAME}" "Publisher" "Birbus Team"
-    WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\${APP_NAME}" "DisplayIcon" "$INSTDIR\${APP_EXE}"
-    WriteRegDWORD HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\${APP_NAME}" "NoModify" 1
-    WriteRegDWORD HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\${APP_NAME}" "NoRepair" 1
 
-    ; Launch on install finish
-    Exec '"$INSTDIR\${APP_EXE}"'
+    ; Add/Remove Programs (user-level)
+    WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\${APP_NAME}" "DisplayName" "${APP_NAME}"
+    WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\${APP_NAME}" "UninstallString" '"$INSTDIR\Uninstall.exe"'
+    WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\${APP_NAME}" "DisplayVersion" "${APP_VERSION}"
+    WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\${APP_NAME}" "Publisher" "Birbus Team"
+    WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\${APP_NAME}" "DisplayIcon" "$INSTDIR\${APP_EXE}"
+    WriteRegDWORD HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\${APP_NAME}" "NoModify" 1
+    WriteRegDWORD HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\${APP_NAME}" "NoRepair" 1
+
+    ; Store install dir
+    WriteRegStr HKCU "Software\${APP_NAME}" "InstallDir" "$INSTDIR"
 SectionEnd
 
 Section "Uninstall"
-    ; Kill running instance
-    ExecWait 'taskkill /F /IM ${APP_EXE}'
+    nsExec::ExecToLog 'taskkill /F /IM ${APP_EXE}'
 
     Delete "$INSTDIR\${APP_EXE}"
     Delete "$INSTDIR\Uninstall.exe"
@@ -77,6 +83,7 @@ Section "Uninstall"
     RMDir "$SMPROGRAMS\${APP_NAME}"
     Delete "$DESKTOP\${APP_NAME}.lnk"
     DeleteRegValue HKCU "Software\Microsoft\Windows\CurrentVersion\Run" "${APP_NAME}"
-    DeleteRegKey HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\${APP_NAME}"
+    DeleteRegKey HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\${APP_NAME}"
+    DeleteRegKey HKCU "Software\${APP_NAME}"
     RMDir /r "$APPDATA\ClawVoice"
 SectionEnd
