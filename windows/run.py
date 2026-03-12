@@ -44,8 +44,9 @@ class SettingsLogHandler(logging.Handler):
 
     def emit(self, record):
         try:
-            level = "error" if record.levelno >= logging.ERROR else "info"
-            self.settings.append_log(record.getMessage(), level=level)
+            # Only show errors in the UI — status/info goes to file log only
+            if record.levelno >= logging.ERROR:
+                self.settings.append_log(record.getMessage(), level="error")
         except Exception:
             pass
 
@@ -108,7 +109,26 @@ def main():
     from main import ClawVoice
 
     config = Config()
-    config.set("setup_complete", True)  # Always mark setup done — no welcome screen
+    config.set("setup_complete", True)
+
+    # Auto-enable Start with Windows on first install
+    if not config.get("startup_configured", False):
+        config.set("startup_configured", True)
+        config.set("start_with_windows", True)
+        try:
+            import winreg
+            key = winreg.OpenKey(
+                winreg.HKEY_CURRENT_USER,
+                r"Software\Microsoft\Windows\CurrentVersion\Run",
+                0, winreg.KEY_SET_VALUE
+            )
+            import sys as _sys
+            exe = _sys.executable if getattr(_sys, 'frozen', False) else os.path.abspath(_sys.argv[0])
+            winreg.SetValueEx(key, "ClawVoice", 0, winreg.REG_SZ, f'"{exe}"')
+            winreg.CloseKey(key)
+            log.info("Start with Windows enabled (default)")
+        except Exception as e:
+            log.error(f"Startup registry: {e}")
 
     settings = SettingsWindow(config, first_run=False)
     overlay = RecordingOverlay()

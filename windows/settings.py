@@ -152,7 +152,7 @@ class SettingsWindow(QWidget):
         layout.addSpacing(12)
 
         self.startup_check = QCheckBox("Start with Windows")
-        self.startup_check.setChecked(self.config.get("start_with_windows", False))
+        self.startup_check.setChecked(self.config.get("start_with_windows", True))
         self.startup_check.toggled.connect(self._toggle_startup)
         layout.addWidget(self.startup_check)
         layout.addSpacing(8)
