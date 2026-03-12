@@ -80,11 +80,11 @@ jobs:
       - name: Publish release
         uses: softprops/action-gh-release@v1
         with:
-          tag_name: v0.6.0
-          name: ClawVoice v0.6.0
+          tag_name: v0.6.1
+          name: ClawVoice v0.6.1
           make_latest: true
           body: |
-            ## ClawVoice v0.6.0
+            ## ClawVoice v0.6.1
 
             Voice dictation for Windows. Hold Ctrl+Alt, speak, release — text appears in any app.
 

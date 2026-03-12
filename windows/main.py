@@ -29,7 +29,6 @@ class ClawVoice(QObject):
         self._transcriber = None
         self._listener = None
         self._setup_recorder()
-        self._setup_hotkey()
 
     def _setup_recorder(self):
         try:
@@ -38,7 +37,7 @@ class ClawVoice(QObject):
         except Exception as e:
             log.error(f"Audio init failed: {e}")
 
-    def _setup_hotkey(self):
+    def start_listening(self):
         try:
             from pynput.keyboard import Listener, Key
             self._Key = Key

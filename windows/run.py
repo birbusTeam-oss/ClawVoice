@@ -123,6 +123,7 @@ def main():
             pass
 
     def on_started():
+        clawvoice.start_listening()
         tray.tray.showMessage(
             "ClawVoice",
             "Running in background — Hold Ctrl+Alt to dictate anywhere.",
@@ -145,7 +146,9 @@ def main():
         settings.show()
         settings.raise_()
         settings.activateWindow()
+        # Listener starts when user clicks Get Started (via on_started)
     else:
+        clawvoice.start_listening()
         log.info("ClawVoice started — hold Ctrl+Alt to dictate")
         tray.tray.showMessage("ClawVoice", "Ready — Hold Ctrl+Alt to dictate.", msecs=3000)
 

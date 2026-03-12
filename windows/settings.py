@@ -148,8 +148,9 @@ class SettingsWindow(QWidget):
         self._build_dashboard()
         self.show()
         self.started.emit()
+        # Small delay then hide — listener is already started by now
         from PyQt6.QtCore import QTimer
-        QTimer.singleShot(800, self.hide)
+        QTimer.singleShot(1500, self.hide)
 
     def _build_dashboard(self):
         layout = self._layout
