@@ -1,13 +1,13 @@
 """
 ClawVoice for Windows — Hold Ctrl+Alt to dictate.
-Uses pynput for BOTH hotkey detection and text injection.
-No keyboard library = no hook conflicts = no crashes.
+pynput callbacks set flags ONLY. QTimer on main thread does all work.
+No Qt signals or thread creation from pynput callbacks.
 """
 import threading
 import os
 import logging
 import time
-from PyQt6.QtCore import QObject, pyqtSignal
+from PyQt6.QtCore import QObject, QTimer, pyqtSignal
 
 log = logging.getLogger("clawvoice")
 
@@ -25,19 +25,24 @@ class ClawVoice(QObject):
         self._injecting = False
         self._ctrl_held = False
         self._alt_held = False
+        self._want_start = False  # flag: pynput wants to start recording
+        self._want_stop = False   # flag: pynput wants to stop recording
         self._recorder = None
         self._transcriber = None
         self._listener = None
+        self._poll_timer = None
         self._setup_recorder()
 
     def _setup_recorder(self):
         try:
             from recorder import AudioRecorder
             self._recorder = AudioRecorder()
+            log.info("Recorder initialized")
         except Exception as e:
             log.error(f"Audio init failed: {e}")
 
     def start_listening(self):
+        """Start the hotkey listener + main thread poll timer."""
         try:
             from pynput.keyboard import Listener, Key
             self._Key = Key
@@ -50,8 +55,16 @@ class ClawVoice(QObject):
             log.info("Hotkey registered: Ctrl+Alt")
         except Exception as e:
             log.error(f"Hotkey setup failed: {e}")
+            return
+
+        # Poll timer on main thread — checks flags every 50ms
+        self._poll_timer = QTimer()
+        self._poll_timer.timeout.connect(self._poll_flags)
+        self._poll_timer.start(50)
+        log.info("Poll timer started")
 
     def _on_key_press(self, key):
+        """pynput callback — ONLY sets flags, no Qt, no threads."""
         if self._injecting or self._processing:
             return
         try:
@@ -61,32 +74,52 @@ class ClawVoice(QObject):
             elif key == Key.alt_l or key == Key.alt_r or key == Key.alt_gr:
                 self._alt_held = True
 
-            if self._ctrl_held and self._alt_held and not self.is_recording and not self._processing:
-                self.is_recording = True
-                self.status_changed.emit("recording")
-                threading.Thread(target=self._record, daemon=True).start()
+            if self._ctrl_held and self._alt_held:
+                self._want_start = True
         except Exception:
             pass
 
     def _on_key_release(self, key):
+        """pynput callback — ONLY sets flags."""
         try:
             Key = self._Key
-            released_ctrl = (key == Key.ctrl_l or key == Key.ctrl_r)
-            released_alt = (key == Key.alt_l or key == Key.alt_r or key == Key.alt_gr)
-
-            if released_ctrl:
+            if key == Key.ctrl_l or key == Key.ctrl_r:
                 self._ctrl_held = False
-            if released_alt:
+                if self.is_recording:
+                    self._want_stop = True
+            elif key == Key.alt_l or key == Key.alt_r or key == Key.alt_gr:
                 self._alt_held = False
-
-            # If either key released while recording, stop
-            if self.is_recording and (released_ctrl or released_alt):
-                self.is_recording = False
-                if self._recorder:
-                    self._recorder.recording = False
-                self.status_changed.emit("transcribing")
+                if self.is_recording:
+                    self._want_stop = True
         except Exception:
             pass
+
+    def _poll_flags(self):
+        """Main thread timer — processes flags set by pynput callbacks."""
+        if self._want_start and not self.is_recording and not self._processing:
+            self._want_start = False
+            self._start_recording()
+
+        if self._want_stop and self.is_recording:
+            self._want_stop = False
+            self._stop_recording()
+
+    def _start_recording(self):
+        if not self._recorder:
+            return
+        self.is_recording = True
+        self._want_start = False
+        log.info("Recording started")
+        self.status_changed.emit("recording")
+        threading.Thread(target=self._record, daemon=True).start()
+
+    def _stop_recording(self):
+        self.is_recording = False
+        self._want_stop = False
+        if self._recorder:
+            self._recorder.recording = False
+        log.info("Recording stopped")
+        self.status_changed.emit("transcribing")
 
     def _record(self):
         try:
@@ -113,11 +146,10 @@ class ClawVoice(QObject):
                 self._reset()
                 return
 
-            log.info("Processing audio...")
+            log.info("Transcribing...")
             transcriber = self._get_transcriber()
             result, error = transcriber.transcribe(audio_path)
 
-            # Auto-retry once on non-API errors
             if error and "API" not in error and "internet" not in error:
                 log.info("Retrying...")
                 time.sleep(0.3)
@@ -131,10 +163,7 @@ class ClawVoice(QObject):
             if result:
                 log.info(f"Transcribed: {len(result.split())} words")
                 self._injecting = True
-                try:
-                    self.transcription_ready.emit(result)
-                except Exception as e:
-                    log.error(f"Emit failed: {e}")
+                self.transcription_ready.emit(result)
                 threading.Timer(1.0, self._clear_inject_guard).start()
             elif error:
                 log.error(error)
@@ -156,6 +185,8 @@ class ClawVoice(QObject):
         self._processing = False
         self._ctrl_held = False
         self._alt_held = False
+        self._want_start = False
+        self._want_stop = False
         try:
             self.status_changed.emit("idle")
         except Exception:
@@ -165,6 +196,8 @@ class ClawVoice(QObject):
         self._injecting = False
 
     def shutdown(self):
+        if self._poll_timer:
+            self._poll_timer.stop()
         if self._listener:
             try:
                 self._listener.stop()
