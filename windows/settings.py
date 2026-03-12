@@ -8,7 +8,7 @@ from PyQt6.QtCore import Qt, QDateTime, pyqtSignal
 
 class SettingsWindow(QWidget):
     started = pyqtSignal()
-    _log_signal = pyqtSignal(str, str)  # message, level — thread-safe log bridge
+    _log_signal = pyqtSignal(str, str)
 
     def __init__(self, config, first_run=False, parent=None):
         super().__init__(parent)
@@ -23,14 +23,7 @@ class SettingsWindow(QWidget):
         self.setMinimumSize(440, 460)
         self.setMaximumWidth(540)
         self.setAttribute(Qt.WidgetAttribute.WA_DeleteOnClose, False)
-
-        if self._first_run:
-            self.setWindowFlags(
-                Qt.WindowType.Window |
-                Qt.WindowType.WindowTitleHint |
-                Qt.WindowType.WindowMinimizeButtonHint
-            )
-
+        # Normal window — always has close button, no flag tricks
         self.setStyleSheet("""
             QWidget {
                 background: #0f0f0f;
@@ -55,8 +48,7 @@ class SettingsWindow(QWidget):
                 spacing: 8px;
             }
             QCheckBox::indicator {
-                width: 16px;
-                height: 16px;
+                width: 16px; height: 16px;
                 border: 1px solid rgba(255,255,255,0.2);
                 border-radius: 3px;
                 background: #1a1a1a;
@@ -76,9 +68,7 @@ class SettingsWindow(QWidget):
             }
             QFrame#divider {
                 background: rgba(255,255,255,0.07);
-                max-height: 1px;
-                min-height: 1px;
-                border: none;
+                max-height: 1px; min-height: 1px; border: none;
             }
         """)
 
@@ -104,12 +94,9 @@ class SettingsWindow(QWidget):
         layout.addWidget(sub)
         layout.addSpacing(32)
 
-        steps = [
-            ("1.", "Hold  Ctrl + Alt  to start recording"),
-            ("2.", "Speak naturally"),
-            ("3.", "Release to inject text into any app"),
-        ]
-        for num, text in steps:
+        for num, text in [("1.", "Hold  Ctrl + Alt  to start recording"),
+                          ("2.", "Speak naturally"),
+                          ("3.", "Release to inject text into any app")]:
             row = QLabel(f'<span style="color:#4CAF70; font-weight:700;">{num}</span>  {text}')
             row.setStyleSheet("font-size: 13px; color: #e8e8e8; padding: 6px 0;")
             layout.addWidget(row)
@@ -117,7 +104,7 @@ class SettingsWindow(QWidget):
         layout.addSpacing(16)
 
         note = QLabel("Works in any app — browsers, editors, chat, anywhere you type.")
-        note.setStyleSheet("font-size: 12px; color: rgba(255,255,255,0.3); line-height: 1.4;")
+        note.setStyleSheet("font-size: 12px; color: rgba(255,255,255,0.3);")
         note.setWordWrap(True)
         layout.addWidget(note)
 
@@ -130,7 +117,7 @@ class SettingsWindow(QWidget):
 
         layout.addSpacing(16)
 
-        hint = QLabel("ClawVoice will live in your system tray after setup.")
+        hint = QLabel("ClawVoice will live in your system tray.")
         hint.setStyleSheet("font-size: 11px; color: rgba(255,255,255,0.25);")
         hint.setAlignment(Qt.AlignmentFlag.AlignCenter)
         layout.addWidget(hint)
@@ -140,24 +127,17 @@ class SettingsWindow(QWidget):
     def _on_get_started(self):
         self._first_run = False
         self.config.set("setup_complete", True)
-        self.setWindowFlags(
-            Qt.WindowType.Window |
-            Qt.WindowType.WindowTitleHint |
-            Qt.WindowType.WindowMinimizeButtonHint |
-            Qt.WindowType.WindowCloseButtonHint
-        )
+        # Just swap layouts — NO window flag changes, NO self.show()
         self._clear_layout()
         self._build_dashboard()
-        self.show()
         self.started.emit()
-        # Small delay then hide — listener is already started by now
+        # Hide after a moment
         from PyQt6.QtCore import QTimer
         QTimer.singleShot(1500, self.hide)
 
     def _build_dashboard(self):
         layout = self._layout
 
-        # Header
         title = QLabel("ClawVoice")
         title.setStyleSheet("font-size: 18px; font-weight: 700; color: #fff;")
         layout.addWidget(title)
@@ -168,18 +148,15 @@ class SettingsWindow(QWidget):
         layout.addWidget(sub)
         layout.addSpacing(24)
 
-        # Settings section
         layout.addWidget(self._section_label("Settings"))
         layout.addSpacing(12)
 
-        # Start with Windows toggle
         self.startup_check = QCheckBox("Start with Windows")
         self.startup_check.setChecked(self.config.get("start_with_windows", False))
         self.startup_check.toggled.connect(self._toggle_startup)
         layout.addWidget(self.startup_check)
         layout.addSpacing(8)
 
-        # Log transcriptions toggle
         self.log_transcriptions_check = QCheckBox("Log transcriptions (local only)")
         self.log_transcriptions_check.setChecked(self.config.get("log_transcriptions", False))
         self.log_transcriptions_check.toggled.connect(
@@ -191,7 +168,6 @@ class SettingsWindow(QWidget):
         layout.addWidget(self._divider())
         layout.addSpacing(20)
 
-        # Logs section
         layout.addWidget(self._section_label("Logs"))
         layout.addSpacing(4)
 
@@ -205,7 +181,6 @@ class SettingsWindow(QWidget):
         self.log_view.setPlaceholderText("Errors and events appear here...")
         layout.addWidget(self.log_view)
 
-        # Replay buffered logs
         if self._log_lines:
             self.log_view.setHtml("<br>".join(self._log_lines))
 
@@ -222,10 +197,7 @@ class SettingsWindow(QWidget):
             )
             if checked:
                 import sys, os
-                if getattr(sys, 'frozen', False):
-                    exe_path = sys.executable
-                else:
-                    exe_path = os.path.abspath(sys.argv[0])
+                exe_path = sys.executable if getattr(sys, 'frozen', False) else os.path.abspath(sys.argv[0])
                 winreg.SetValueEx(key, "ClawVoice", 0, winreg.REG_SZ, f'"{exe_path}"')
                 self.append_log("Start with Windows enabled")
             else:
@@ -246,9 +218,7 @@ class SettingsWindow(QWidget):
 
     def _section_label(self, text):
         label = QLabel(text.upper())
-        label.setStyleSheet(
-            "font-size: 10px; font-weight: 600; color: rgba(255,255,255,0.3); letter-spacing: 1px;"
-        )
+        label.setStyleSheet("font-size: 10px; font-weight: 600; color: rgba(255,255,255,0.3); letter-spacing: 1px;")
         return label
 
     def _divider(self):
@@ -258,17 +228,11 @@ class SettingsWindow(QWidget):
         return f
 
     def append_log(self, message, level="info"):
-        """Thread-safe: emits signal so widget update happens on main thread."""
         self._log_signal.emit(message, level)
 
     def _append_log_main_thread(self, message, level):
-        """Runs on main thread only — safe to touch widgets."""
         timestamp = QDateTime.currentDateTime().toString("hh:mm:ss")
-        color_map = {
-            "error": "#ef4444",
-            "warn": "#F59E0B",
-            "info": "rgba(255,255,255,0.4)",
-        }
+        color_map = {"error": "#ef4444", "warn": "#F59E0B", "info": "rgba(255,255,255,0.4)"}
         color = color_map.get(level, color_map["info"])
         self._log_lines.append(
             f'<span style="color:rgba(255,255,255,0.2)">[{timestamp}]</span> '
@@ -284,8 +248,5 @@ class SettingsWindow(QWidget):
         return self.config.get("log_transcriptions", False)
 
     def closeEvent(self, event):
-        if self._first_run:
-            event.ignore()
-        else:
-            self.hide()
-            event.ignore()
+        self.hide()
+        event.ignore()

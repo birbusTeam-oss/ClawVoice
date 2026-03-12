@@ -17,7 +17,7 @@ logging.basicConfig(
     format="%(asctime)s %(message)s",
     datefmt="%H:%M:%S",
     handlers=[
-        logging.FileHandler(_log_file, mode='w', encoding='utf-8'),  # overwrite each launch
+        logging.FileHandler(_log_file, mode='a', encoding='utf-8'),  # overwrite each launch
         logging.StreamHandler(sys.stdout),
     ]
 )

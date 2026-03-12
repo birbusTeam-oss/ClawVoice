@@ -1,13 +1,13 @@
 !define APP_NAME "ClawVoice"
-!define APP_VERSION "0.6.4"
+!define APP_VERSION "0.7.0"
 !define APP_EXE "ClawVoice.exe"
 
-VIProductVersion "0.6.4.0"
+VIProductVersion "0.7.0.0"
 VIAddVersionKey "ProductName" "ClawVoice"
 VIAddVersionKey "CompanyName" "Birbus Team"
 VIAddVersionKey "FileDescription" "ClawVoice - Voice Dictation for Windows"
-VIAddVersionKey "FileVersion" "0.6.4"
-VIAddVersionKey "ProductVersion" "0.6.4"
+VIAddVersionKey "FileVersion" "0.7.0"
+VIAddVersionKey "ProductVersion" "0.7.0"
 VIAddVersionKey "LegalCopyright" "MIT License"
 
 Name "${APP_NAME} ${APP_VERSION}"
