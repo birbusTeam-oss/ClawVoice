@@ -1,6 +1,5 @@
 """
 ClawVoice for Windows — Entry Point
-Crash-resilient: stays running no matter what.
 """
 import sys
 import logging
@@ -11,7 +10,6 @@ log = logging.getLogger("clawvoice")
 
 
 def _global_exception_hook(exc_type, exc_value, exc_tb):
-    """Catch unhandled exceptions — log them, don't crash."""
     try:
         log.error(f"Unhandled: {exc_type.__name__}: {exc_value}")
     except Exception:
@@ -37,7 +35,6 @@ class SettingsLogHandler(logging.Handler):
 
 
 def safe_inject(text: str):
-    """Crash-safe inject wrapper."""
     try:
         from injector import inject
         inject(text)
@@ -46,33 +43,21 @@ def safe_inject(text: str):
 
 
 def warmup():
-    """Pre-load all heavy dependencies so first real use is instant."""
+    """Pre-load heavy dependencies."""
     try:
-        # 1. Pre-load SpeechRecognition + FLAC encoder
         import speech_recognition as sr
-        r = sr.Recognizer()
-        r.energy_threshold = 300
+        sr.Recognizer()
         log.info("Speech engine loaded")
     except Exception as e:
         log.error(f"Speech warmup: {e}")
 
     try:
-        # 2. Pre-load pynput Controller (AFTER keyboard hook is set up)
-        from injector import _get_controller
-        _get_controller()
-        log.info("Input controller loaded")
-    except Exception as e:
-        log.error(f"Controller warmup: {e}")
-
-    try:
-        # 3. Pre-load pyperclip
         import pyperclip
         pyperclip.paste()
     except Exception:
         pass
 
     try:
-        # 4. Pre-init PyAudio
         import pyaudio
         pa = pyaudio.PyAudio()
         pa.terminate()
@@ -106,7 +91,6 @@ def main():
             f"Failed to start: {e}\n\nTry running as Administrator.")
         sys.exit(1)
 
-    # Warmup AFTER keyboard hook is set up (important: pynput must init after keyboard)
     warmup()
 
     tray = TrayManager(app, clawvoice, settings)
@@ -121,7 +105,7 @@ def main():
             elif status in ("idle", "error"):
                 overlay.hide_overlay()
         except Exception as e:
-            log.error(f"Status handler: {e}")
+            log.error(f"Status: {e}")
 
     def on_transcription(text: str):
         try:
@@ -135,8 +119,8 @@ def main():
     def on_error(message: str):
         try:
             overlay.show_error(message)
-        except Exception as e:
-            log.error(f"Error display: {e}")
+        except Exception:
+            pass
 
     def on_started():
         tray.tray.showMessage(
@@ -151,10 +135,8 @@ def main():
     clawvoice.transcription_ready.connect(on_transcription)
     clawvoice.error_occurred.connect(on_error)
     settings.started.connect(on_started)
-
     app.aboutToQuit.connect(clawvoice.shutdown)
 
-    # Keepalive — prevents event loop from exiting
     keepalive = QTimer()
     keepalive.timeout.connect(lambda: None)
     keepalive.start(5000)
