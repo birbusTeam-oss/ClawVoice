@@ -2,16 +2,33 @@
 ClawVoice for Windows — Entry Point
 """
 import sys
+import os
 import logging
 import traceback
 
-logging.basicConfig(level=logging.INFO, format="%(message)s")
+# === Persistent crash log ===
+# Writes to %APPDATA%/ClawVoice/clawvoice.log so we can see what happened before a crash
+_log_dir = os.path.join(os.environ.get("APPDATA", os.path.expanduser("~")), "ClawVoice")
+os.makedirs(_log_dir, exist_ok=True)
+_log_file = os.path.join(_log_dir, "clawvoice.log")
+
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s %(message)s",
+    datefmt="%H:%M:%S",
+    handlers=[
+        logging.FileHandler(_log_file, mode='w', encoding='utf-8'),  # overwrite each launch
+        logging.StreamHandler(sys.stdout),
+    ]
+)
 log = logging.getLogger("clawvoice")
+log.info("=== ClawVoice starting ===")
 
 
 def _global_exception_hook(exc_type, exc_value, exc_tb):
     try:
-        log.error(f"Unhandled: {exc_type.__name__}: {exc_value}")
+        log.error(f"UNHANDLED CRASH: {exc_type.__name__}: {exc_value}")
+        log.error("".join(traceback.format_exception(exc_type, exc_value, exc_tb)))
     except Exception:
         pass
 
@@ -36,8 +53,10 @@ class SettingsLogHandler(logging.Handler):
 
 def safe_inject(text: str):
     try:
+        log.info("Injecting text...")
         from injector import inject
         inject(text)
+        log.info("Inject complete")
     except Exception as e:
         log.error(f"Inject failed: {e}")
 
@@ -47,29 +66,43 @@ def warmup():
     try:
         import speech_recognition as sr
         sr.Recognizer()
-        log.info("Speech engine loaded")
+        log.info("WARMUP: speech engine OK")
     except Exception as e:
-        log.error(f"Speech warmup: {e}")
+        log.error(f"WARMUP: speech failed: {e}")
 
     try:
         import pyperclip
         pyperclip.paste()
+        log.info("WARMUP: clipboard OK")
     except Exception:
         pass
 
     try:
         import pyaudio
         pa = pyaudio.PyAudio()
+        # Check default input device
+        try:
+            info = pa.get_default_input_device_info()
+            log.info(f"WARMUP: mic '{info['name']}' rate={int(info['defaultSampleRate'])}")
+        except Exception:
+            log.info("WARMUP: no default mic found")
         pa.terminate()
-        log.info("Audio system loaded")
     except Exception as e:
-        log.error(f"Audio warmup: {e}")
+        log.error(f"WARMUP: audio failed: {e}")
+
+    try:
+        from pynput.keyboard import Controller
+        Controller()
+        log.info("WARMUP: keyboard controller OK")
+    except Exception as e:
+        log.error(f"WARMUP: controller failed: {e}")
 
 
 def main():
     app = QApplication(sys.argv)
     app.setQuitOnLastWindowClosed(False)
     app.setApplicationName("ClawVoice")
+    log.info("Qt app created")
 
     from config import Config
     from settings import SettingsWindow
@@ -79,6 +112,8 @@ def main():
 
     config = Config()
     first_run = not config.get("setup_complete", False)
+    log.info(f"First run: {first_run}")
+
     settings = SettingsWindow(config, first_run=first_run)
     overlay = RecordingOverlay()
 
@@ -86,12 +121,15 @@ def main():
 
     try:
         clawvoice = ClawVoice(config)
+        log.info("ClawVoice engine created")
     except Exception as e:
+        log.error(f"Engine failed: {e}")
         QMessageBox.critical(None, "ClawVoice",
             f"Failed to start: {e}\n\nTry running as Administrator.")
         sys.exit(1)
 
     warmup()
+    log.info("Warmup complete")
 
     tray = TrayManager(app, clawvoice, settings)
 
@@ -122,14 +160,20 @@ def main():
         except Exception:
             pass
 
-    def on_started():
+    def start_listening_now():
+        """Deferred listener start — runs from QTimer, not from signal chain."""
+        log.info("Starting hotkey listener...")
         clawvoice.start_listening()
+        log.info("Hotkey listener active — Ctrl+Alt ready")
+
+    def on_started():
+        # Delay listener start by 2 seconds — well after all window transitions
+        QTimer.singleShot(2000, start_listening_now)
         tray.tray.showMessage(
             "ClawVoice",
             "Running in background — Hold Ctrl+Alt to dictate anywhere.",
             msecs=5000
         )
-        log.info("Ready — hold Ctrl+Alt to dictate")
 
     clawvoice.status_changed.connect(on_status)
     clawvoice.transcription_ready.connect(safe_inject)
@@ -146,10 +190,11 @@ def main():
         settings.show()
         settings.raise_()
         settings.activateWindow()
-        # Listener starts when user clicks Get Started (via on_started)
+        log.info("Welcome screen shown — waiting for Get Started")
     else:
-        clawvoice.start_listening()
-        log.info("ClawVoice started — hold Ctrl+Alt to dictate")
+        # Not first run — start listener immediately via QTimer (still deferred)
+        QTimer.singleShot(500, start_listening_now)
+        log.info("ClawVoice started")
         tray.tray.showMessage("ClawVoice", "Ready — Hold Ctrl+Alt to dictate.", msecs=3000)
 
     app.exec()
@@ -159,5 +204,5 @@ if __name__ == "__main__":
     try:
         main()
     except Exception as e:
-        print(f"Fatal: {e}")
+        log.error(f"FATAL: {e}")
         traceback.print_exc()
