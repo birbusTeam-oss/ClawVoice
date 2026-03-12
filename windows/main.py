@@ -1,7 +1,6 @@
 """
-ClawVoice for Windows — Hold Ctrl+Alt to dictate.
-pynput callbacks set flags ONLY. QTimer on main thread does all work.
-No Qt signals or thread creation from pynput callbacks.
+ClawVoice — Hold Ctrl+Alt to dictate.
+Flag-based: pynput sets flags, QTimer processes on main thread.
 """
 import threading
 import os
@@ -25,8 +24,9 @@ class ClawVoice(QObject):
         self._injecting = False
         self._ctrl_held = False
         self._alt_held = False
-        self._want_start = False  # flag: pynput wants to start recording
-        self._want_stop = False   # flag: pynput wants to stop recording
+        self._want_start = False
+        self._want_stop = False
+        self._cooldown_until = 0  # timestamp — no new recording until this time
         self._recorder = None
         self._transcriber = None
         self._listener = None
@@ -42,7 +42,6 @@ class ClawVoice(QObject):
             log.error(f"Audio init failed: {e}")
 
     def start_listening(self):
-        """Start the hotkey listener + main thread poll timer."""
         try:
             from pynput.keyboard import Listener, Key
             self._Key = Key
@@ -57,14 +56,13 @@ class ClawVoice(QObject):
             log.error(f"Hotkey setup failed: {e}")
             return
 
-        # Poll timer on main thread — checks flags every 50ms
         self._poll_timer = QTimer()
         self._poll_timer.timeout.connect(self._poll_flags)
         self._poll_timer.start(50)
         log.info("Poll timer started")
 
     def _on_key_press(self, key):
-        """pynput callback — ONLY sets flags, no Qt, no threads."""
+        """pynput callback — ONLY sets flags."""
         if self._injecting or self._processing:
             return
         try:
@@ -74,7 +72,7 @@ class ClawVoice(QObject):
             elif key == Key.alt_l or key == Key.alt_r or key == Key.alt_gr:
                 self._alt_held = True
 
-            if self._ctrl_held and self._alt_held:
+            if self._ctrl_held and self._alt_held and not self.is_recording:
                 self._want_start = True
         except Exception:
             pass
@@ -95,20 +93,30 @@ class ClawVoice(QObject):
             pass
 
     def _poll_flags(self):
-        """Main thread timer — processes flags set by pynput callbacks."""
-        if self._want_start and not self.is_recording and not self._processing:
-            self._want_start = False
-            self._start_recording()
+        """Main thread — processes flags from pynput."""
+        now = time.time()
 
+        # Stop takes priority over start
         if self._want_stop and self.is_recording:
             self._want_stop = False
+            self._want_start = False  # discard any stale start
             self._stop_recording()
+            return
+
+        if self._want_start and not self.is_recording and not self._processing:
+            if now < self._cooldown_until:
+                self._want_start = False  # too soon, discard
+                return
+            self._want_start = False
+            self._start_recording()
 
     def _start_recording(self):
         if not self._recorder:
             return
         self.is_recording = True
+        self._processing = True  # block new recordings until transcription done
         self._want_start = False
+        self._want_stop = False
         log.info("Recording started")
         self.status_changed.emit("recording")
         threading.Thread(target=self._record, daemon=True).start()
@@ -116,6 +124,8 @@ class ClawVoice(QObject):
     def _stop_recording(self):
         self.is_recording = False
         self._want_stop = False
+        self._want_start = False  # discard any stale start flags
+        self._cooldown_until = time.time() + 1.0  # 1 second cooldown
         if self._recorder:
             self._recorder.recording = False
         log.info("Recording stopped")
@@ -138,11 +148,23 @@ class ClawVoice(QObject):
         return self._transcriber
 
     def _process(self):
-        self._processing = True
         try:
             audio_path = self._recorder.stop()
             if not audio_path:
                 log.info("No audio captured")
+                self._reset()
+                return
+
+            file_size = os.path.getsize(audio_path) if os.path.exists(audio_path) else 0
+            log.info(f"Audio: {file_size // 1024}KB")
+
+            # Skip tiny recordings (< 5KB = no real speech)
+            if file_size < 5000:
+                log.info("Recording too short, skipping")
+                try:
+                    os.remove(audio_path)
+                except Exception:
+                    pass
                 self._reset()
                 return
 
@@ -187,6 +209,7 @@ class ClawVoice(QObject):
         self._alt_held = False
         self._want_start = False
         self._want_stop = False
+        self._cooldown_until = time.time() + 0.5  # brief cooldown after reset
         try:
             self.status_changed.emit("idle")
         except Exception:

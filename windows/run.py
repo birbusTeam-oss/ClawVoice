@@ -1,13 +1,12 @@
 """
 ClawVoice for Windows — Entry Point
+No welcome screen. Starts silently, lives in tray.
 """
 import sys
 import os
 import logging
 import traceback
 
-# === Persistent crash log ===
-# Writes to %APPDATA%/ClawVoice/clawvoice.log so we can see what happened before a crash
 _log_dir = os.path.join(os.environ.get("APPDATA", os.path.expanduser("~")), "ClawVoice")
 os.makedirs(_log_dir, exist_ok=True)
 _log_file = os.path.join(_log_dir, "clawvoice.log")
@@ -17,7 +16,7 @@ logging.basicConfig(
     format="%(asctime)s %(message)s",
     datefmt="%H:%M:%S",
     handlers=[
-        logging.FileHandler(_log_file, mode='a', encoding='utf-8'),  # overwrite each launch
+        logging.FileHandler(_log_file, mode='a', encoding='utf-8'),
         logging.StreamHandler(sys.stdout),
     ]
 )
@@ -62,7 +61,6 @@ def safe_inject(text: str):
 
 
 def warmup():
-    """Pre-load heavy dependencies."""
     try:
         import speech_recognition as sr
         sr.Recognizer()
@@ -80,7 +78,6 @@ def warmup():
     try:
         import pyaudio
         pa = pyaudio.PyAudio()
-        # Check default input device
         try:
             info = pa.get_default_input_device_info()
             log.info(f"WARMUP: mic '{info['name']}' rate={int(info['defaultSampleRate'])}")
@@ -111,10 +108,9 @@ def main():
     from main import ClawVoice
 
     config = Config()
-    first_run = not config.get("setup_complete", False)
-    log.info(f"First run: {first_run}")
+    config.set("setup_complete", True)  # Always mark setup done — no welcome screen
 
-    settings = SettingsWindow(config, first_run=first_run)
+    settings = SettingsWindow(config, first_run=False)
     overlay = RecordingOverlay()
 
     log.addHandler(SettingsLogHandler(settings))
@@ -161,42 +157,30 @@ def main():
             pass
 
     def start_listening_now():
-        """Deferred listener start — runs from QTimer, not from signal chain."""
         log.info("Starting hotkey listener...")
         clawvoice.start_listening()
         log.info("Hotkey listener active — Ctrl+Alt ready")
-
-    def on_started():
-        # Delay listener start by 2 seconds — well after all window transitions
-        QTimer.singleShot(2000, start_listening_now)
         tray.tray.showMessage(
             "ClawVoice",
-            "Running in background — Hold Ctrl+Alt to dictate anywhere.",
-            msecs=5000
+            "Ready — Hold Ctrl+Alt to dictate anywhere.",
+            msecs=4000
         )
 
     clawvoice.status_changed.connect(on_status)
     clawvoice.transcription_ready.connect(safe_inject)
     clawvoice.transcription_ready.connect(on_transcription)
     clawvoice.error_occurred.connect(on_error)
-    settings.started.connect(on_started)
     app.aboutToQuit.connect(clawvoice.shutdown)
 
     keepalive = QTimer()
     keepalive.timeout.connect(lambda: None)
     keepalive.start(5000)
 
-    if first_run:
-        settings.show()
-        settings.raise_()
-        settings.activateWindow()
-        log.info("Welcome screen shown — waiting for Get Started")
-    else:
-        # Not first run — start listener immediately via QTimer (still deferred)
-        QTimer.singleShot(500, start_listening_now)
-        log.info("ClawVoice started")
-        tray.tray.showMessage("ClawVoice", "Ready — Hold Ctrl+Alt to dictate.", msecs=3000)
+    # Show "Initializing..." notification, then start listener after 1.5s
+    tray.tray.showMessage("ClawVoice", "Initializing...", msecs=2000)
+    QTimer.singleShot(1500, start_listening_now)
 
+    log.info("ClawVoice starting up — no window, tray only")
     app.exec()
 
 
