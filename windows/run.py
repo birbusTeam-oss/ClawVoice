@@ -167,6 +167,7 @@ def main():
             overlay.show_success(word_count)
             if settings.should_log_transcriptions():
                 log.info(f"[{word_count} words] {text}")
+                settings.append_log(f"[{word_count} words] {text}", level="info")
         except Exception as e:
             log.error(f"Display: {e}")
 

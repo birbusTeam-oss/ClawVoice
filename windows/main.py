@@ -124,12 +124,17 @@ class ClawVoice(QObject):
     def _stop_recording(self):
         self.is_recording = False
         self._want_stop = False
-        self._want_start = False  # discard any stale start flags
-        self._cooldown_until = time.time() + 1.0  # 1 second cooldown
+        self._want_start = False
+        self._cooldown_until = time.time() + 1.5
+        log.info("Recording stopping (0.5s tail buffer)...")
+        self.status_changed.emit("transcribing")
+        # Keep mic open 0.5s after key release to catch trailing words
+        threading.Timer(0.5, self._finalize_stop).start()
+
+    def _finalize_stop(self):
         if self._recorder:
             self._recorder.recording = False
         log.info("Recording stopped")
-        self.status_changed.emit("transcribing")
 
     def _record(self):
         try:
