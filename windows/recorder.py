@@ -4,7 +4,7 @@ import tempfile
 import threading
 import time
 
-MAX_RECORD_SECONDS = 120  # 2 min cap — prevents unbounded memory + huge API payloads
+MAX_RECORD_SECONDS = 120  # 2 min cap -- prevents unbounded memory + huge API payloads
 
 class AudioRecorder:
     def __init__(self):

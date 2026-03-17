@@ -34,3 +34,4 @@ windows/build/
 *.log
 *.tmp
 node_modules/
+__pycache__/

@@ -28,7 +28,7 @@ class RecordingOverlay(QWidget):
         layout.setContentsMargins(18, 0, 18, 0)
         layout.setSpacing(10)
 
-        self.dot = QLabel("●")
+        self.dot = QLabel("*")
         self.dot.setStyleSheet("color: #ff4444; font-size: 13px;")
         self.dot.setFocusPolicy(Qt.FocusPolicy.NoFocus)
         layout.addWidget(self.dot)
@@ -90,19 +90,19 @@ class RecordingOverlay(QWidget):
         # Truncate long messages so they fit
         if len(message) > 38:
             message = message[:35] + "..."
-        self.label.setText(f"⚠ {message}")
+        self.label.setText(f"! {message}")
         self._position()
         self.show()
         self._auto_hide_timer.start(3500)
 
     def show_success(self, word_count: int):
-        """Show '✓ N words injected' briefly, then auto-hide."""
+        """Show 'OK N words injected' briefly, then auto-hide."""
         self._auto_hide_timer.stop()
         self._timer.stop()
         self.dot.setStyleSheet("color: #2ecc71; font-size: 13px;")
         self.label.setStyleSheet("color: #2ecc71; font-size: 13px; font-weight: 600; font-family: 'Segoe UI', sans-serif;")
         word_label = "word" if word_count == 1 else "words"
-        self.label.setText(f"✓ {word_count} {word_label} injected")
+        self.label.setText(f"OK {word_count} {word_label} injected")
         self._position()
         self.show()
         self._auto_hide_timer.start(1800)

@@ -7,11 +7,11 @@ from PyQt6.QtGui import QIcon
 def get_asset_path(filename):
     """Resolve asset path for both dev and PyInstaller frozen bundle."""
     if getattr(sys, 'frozen', False):
-        # PyInstaller bundle — assets are in sys._MEIPASS/assets/
+        # PyInstaller bundle -- assets are in sys._MEIPASS/assets/
         base = os.path.join(sys._MEIPASS, "assets", filename)
         if os.path.exists(base):
             return base
-    # Dev mode — relative to this file
+    # Dev mode -- relative to this file
     base = os.path.join(os.path.dirname(os.path.abspath(__file__)), "assets", filename)
     return base
 
@@ -32,12 +32,12 @@ class TrayManager:
         }
 
         self.tray.setIcon(self.icons["idle"])
-        self.tray.setToolTip("ClawVoice — Ready")
+        self.tray.setToolTip("ClawVoice -- Ready")
 
         menu = QMenu()
-        menu.addAction("⚙️ Settings", settings_window.show)
+        menu.addAction(" Settings", settings_window.show)
         menu.addSeparator()
-        menu.addAction("❌ Quit", app.quit)
+        menu.addAction("X Quit", app.quit)
         self.tray.setContextMenu(menu)
 
         clawvoice.status_changed.connect(self._on_status)
@@ -53,9 +53,9 @@ class TrayManager:
         icon = self.icons.get(status, self.icons["idle"])
         self.tray.setIcon(icon)
         tooltips = {
-            "idle":         "ClawVoice — Ready",
-            "recording":    "ClawVoice — Recording... release Ctrl+Alt to stop",
-            "transcribing": "ClawVoice — Transcribing...",
-            "error":        "ClawVoice — Error (see overlay for details)",
+            "idle":         "ClawVoice -- Ready",
+            "recording":    "ClawVoice -- Recording... release Ctrl+Alt to stop",
+            "transcribing": "ClawVoice -- Transcribing...",
+            "error":        "ClawVoice -- Error (see overlay for details)",
         }
         self.tray.setToolTip(tooltips.get(status, "ClawVoice"))

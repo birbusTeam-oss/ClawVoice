@@ -1,5 +1,5 @@
 """
-Text injection — clipboard paste via pynput keypress simulation.
+Text injection -- clipboard paste via pynput keypress simulation.
 Controller is pre-initialized to avoid first-use conflicts with keyboard library.
 """
 import time

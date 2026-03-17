@@ -1,5 +1,5 @@
 """
-ClawVoice for Windows — Entry Point
+ClawVoice for Windows -- Entry Point
 No welcome screen. Starts silently, lives in tray.
 """
 import sys
@@ -44,7 +44,7 @@ class SettingsLogHandler(logging.Handler):
 
     def emit(self, record):
         try:
-            # Only show errors in the UI — status/info goes to file log only
+            # Only show errors in the UI -- status/info goes to file log only
             if record.levelno >= logging.ERROR:
                 self.settings.append_log(record.getMessage(), level="error")
         except Exception:
@@ -180,10 +180,10 @@ def main():
     def start_listening_now():
         log.info("Starting hotkey listener...")
         clawvoice.start_listening()
-        log.info("Hotkey listener active — Ctrl+Alt ready")
+        log.info("Hotkey listener active -- Ctrl+Alt ready")
         tray.tray.showMessage(
             "ClawVoice",
-            "Ready — Hold Ctrl+Alt to dictate anywhere.",
+            "Ready -- Hold Ctrl+Alt to dictate anywhere.",
             msecs=4000
         )
 
@@ -201,7 +201,7 @@ def main():
     tray.tray.showMessage("ClawVoice", "Initializing...", msecs=2000)
     QTimer.singleShot(1500, start_listening_now)
 
-    log.info("ClawVoice starting up — no window, tray only")
+    log.info("ClawVoice starting up -- no window, tray only")
     app.exec()
 
 

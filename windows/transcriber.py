@@ -1,21 +1,12 @@
+"""
+Transcriber - offline-only using faster-whisper.
+Zero cloud dependencies. Zero API keys.
+"""
 import os
 import re
 import logging
 
 log = logging.getLogger("clawvoice")
-
-# Module-level cached recognizer — loaded once, used forever
-_recognizer = None
-
-def _get_recognizer():
-    global _recognizer
-    if _recognizer is None:
-        import speech_recognition as sr
-        _recognizer = sr.Recognizer()
-        _recognizer.energy_threshold = 300
-        _recognizer.dynamic_energy_threshold = True
-        _recognizer.pause_threshold = 0.6
-    return _recognizer
 
 
 def _clean_text(text: str) -> str:
@@ -32,47 +23,86 @@ def _clean_text(text: str) -> str:
 
 
 class Transcriber:
-    def __init__(self, config):
+    def __init__(self, config, model_manager=None):
         self.config = config
+        self._model_manager = model_manager
 
     def transcribe(self, audio_path: str) -> tuple[str | None, str | None]:
         if not os.path.exists(audio_path):
             return None, "Audio file not found"
 
+        file_size = os.path.getsize(audio_path)
+        if file_size < 2000:
+            return None, None
+
+        # VAD check - skip silence
         try:
-            file_size = os.path.getsize(audio_path)
-            log.info(f"Audio: {file_size // 1024}KB")
-
-            if file_size < 2000:
+            from vad import has_speech
+            if not has_speech(audio_path):
+                log.info("VAD: no speech detected, skipping transcription")
                 return None, None
+        except ImportError:
+            pass  # VAD not available, transcribe anyway
 
-            import speech_recognition as sr
-            recognizer = _get_recognizer()
+        # Try offline (faster-whisper) with model manager
+        if self._model_manager and self._model_manager.is_loaded():
+            return self._transcribe_offline(audio_path)
 
-            with sr.AudioFile(audio_path) as source:
-                recognizer.adjust_for_ambient_noise(source, duration=0.15)
-                audio = recognizer.record(source)
+        # Try to load model via manager
+        if self._model_manager:
+            if self._model_manager.load():
+                return self._transcribe_offline(audio_path)
 
-            log.info("Transcribing...")
-            try:
-                text = recognizer.recognize_google(audio, language="en-US")
-            except sr.UnknownValueError:
-                log.info("No speech detected")
-                return None, None
-            except sr.RequestError as e:
-                log.error(f"Speech API error: {e}")
-                return None, f"Speech API error — check internet"
+        # Try faster-whisper standalone (no model manager)
+        try:
+            return self._transcribe_offline_standalone(audio_path)
+        except ImportError:
+            return None, "faster-whisper not installed. Run: pip install faster-whisper"
 
-            if not text or not text.strip():
+    def _transcribe_offline(self, audio_path: str) -> tuple[str | None, str | None]:
+        try:
+            model = self._model_manager.get_model()
+            if model is None:
+                return None, "Model not loaded"
+
+            segments, info = model.transcribe(
+                audio_path,
+                beam_size=5,
+                language="en",
+                vad_filter=True,
+                vad_parameters=dict(
+                    min_silence_duration_ms=500,
+                    speech_pad_ms=200,
+                ),
+            )
+
+            text = " ".join(seg.text for seg in segments).strip()
+            if not text:
                 return None, None
 
             text = _clean_text(text)
             words = len(text.split())
-            log.info(f"Got {words} words: {text[:60]}{'...' if len(text) > 60 else ''}")
+            log.info(f"Offline: {words} words: {text[:60]}{'...' if len(text) > 60 else ''}")
             return text, None
 
-        except ImportError as e:
-            return None, f"Missing library: {e}"
         except Exception as e:
-            log.error(f"Transcription error: {e}")
+            log.error(f"Offline transcription error: {e}")
             return None, f"Transcription error: {str(e)[:80]}"
+
+    def _transcribe_offline_standalone(self, audio_path: str) -> tuple[str | None, str | None]:
+        """Use faster-whisper without ModelManager."""
+        from faster_whisper import WhisperModel
+        from model_manager import MODEL_DIR, DEFAULT_MODEL
+
+        model_name = self.config.get("model", DEFAULT_MODEL)
+        model = WhisperModel(model_name, device="cpu", compute_type="int8",
+                           download_root=str(MODEL_DIR))
+
+        segments, info = model.transcribe(audio_path, beam_size=5, language="en",
+                                          vad_filter=True)
+        text = " ".join(seg.text for seg in segments).strip()
+        if not text:
+            return None, None
+        text = _clean_text(text)
+        log.info(f"Offline (standalone): {len(text.split())} words")
+        return text, None

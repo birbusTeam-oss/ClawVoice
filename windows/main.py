@@ -1,5 +1,5 @@
 """
-ClawVoice — Hold Ctrl+Alt to dictate.
+ClawVoice -- Hold Ctrl+Alt to dictate.
 Flag-based: pynput sets flags, QTimer processes on main thread.
 """
 import threading
@@ -26,12 +26,14 @@ class ClawVoice(QObject):
         self._alt_held = False
         self._want_start = False
         self._want_stop = False
-        self._cooldown_until = 0  # timestamp — no new recording until this time
+        self._cooldown_until = 0  # timestamp -- no new recording until this time
         self._recorder = None
         self._transcriber = None
+        self._model_manager = None
         self._listener = None
         self._poll_timer = None
         self._setup_recorder()
+        self._setup_model_manager()
 
     def _setup_recorder(self):
         try:
@@ -40,6 +42,20 @@ class ClawVoice(QObject):
             log.info("Recorder initialized")
         except Exception as e:
             log.error(f"Audio init failed: {e}")
+
+    def _setup_model_manager(self):
+        try:
+            from model_manager import ModelManager
+            self._model_manager = ModelManager(self.config)
+            # Load model in background to avoid blocking startup
+            threading.Thread(target=self._model_manager.load, daemon=True).start()
+            log.info("Model manager initialized (loading in background)")
+        except ImportError:
+            log.warning("faster-whisper not installed, will use cloud transcription")
+            self._model_manager = None
+        except Exception as e:
+            log.error(f"Model manager init failed: {e}")
+            self._model_manager = None
 
     def start_listening(self):
         try:
@@ -62,7 +78,7 @@ class ClawVoice(QObject):
         log.info("Poll timer started")
 
     def _on_key_press(self, key):
-        """pynput callback — ONLY sets flags."""
+        """pynput callback -- ONLY sets flags."""
         if self._injecting or self._processing:
             return
         try:
@@ -78,7 +94,7 @@ class ClawVoice(QObject):
             pass
 
     def _on_key_release(self, key):
-        """pynput callback — ONLY sets flags."""
+        """pynput callback -- ONLY sets flags."""
         try:
             Key = self._Key
             if key == Key.ctrl_l or key == Key.ctrl_r:
@@ -93,7 +109,7 @@ class ClawVoice(QObject):
             pass
 
     def _poll_flags(self):
-        """Main thread — processes flags from pynput."""
+        """Main thread -- processes flags from pynput."""
         now = time.time()
 
         # Stop takes priority over start
@@ -149,7 +165,7 @@ class ClawVoice(QObject):
     def _get_transcriber(self):
         if self._transcriber is None:
             from transcriber import Transcriber
-            self._transcriber = Transcriber(self.config)
+            self._transcriber = Transcriber(self.config, model_manager=self._model_manager)
         return self._transcriber
 
     def _process(self):

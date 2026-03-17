@@ -23,7 +23,7 @@ class SettingsWindow(QWidget):
         self.setMinimumSize(440, 460)
         self.setMaximumWidth(540)
         self.setAttribute(Qt.WidgetAttribute.WA_DeleteOnClose, False)
-        # Normal window — always has close button, no flag tricks
+        # Normal window -- always has close button, no flag tricks
         self.setStyleSheet("""
             QWidget {
                 background: #0f0f0f;
@@ -103,7 +103,7 @@ class SettingsWindow(QWidget):
 
         layout.addSpacing(16)
 
-        note = QLabel("Works in any app — browsers, editors, chat, anywhere you type.")
+        note = QLabel("Works in any app -- browsers, editors, chat, anywhere you type.")
         note.setStyleSheet("font-size: 12px; color: rgba(255,255,255,0.3);")
         note.setWordWrap(True)
         layout.addWidget(note)
@@ -127,7 +127,7 @@ class SettingsWindow(QWidget):
     def _on_get_started(self):
         self._first_run = False
         self.config.set("setup_complete", True)
-        # Just swap layouts — NO window flag changes, NO self.show()
+        # Just swap layouts -- NO window flag changes, NO self.show()
         self._clear_layout()
         self._build_dashboard()
         self.started.emit()
